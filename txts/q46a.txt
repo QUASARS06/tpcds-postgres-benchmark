@@ -1,0 +1,58 @@
+                                                                                                    QUERY PLAN                                                                                                     
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=78025.38..78025.63 rows=100 width=138) (actual time=244.073..244.167 rows=100 loops=1)
+   ->  Sort  (cost=78025.38..78031.78 rows=2559 width=138) (actual time=244.072..244.163 rows=100 loops=1)
+         Sort Key: customer.c_last_name, customer.c_first_name, current_addr.ca_city, dn.bought_city, dn.ss_ticket_number
+         Sort Method: top-N heapsort  Memory: 47kB
+         ->  Nested Loop  (cost=71206.50..77927.58 rows=2559 width=138) (actual time=214.446..242.372 rows=9808 loops=1)
+               Join Filter: ((current_addr.ca_city)::text <> (dn.bought_city)::text)
+               Rows Removed by Join Filter: 662
+               ->  Merge Join  (cost=71206.21..76976.70 rows=2563 width=133) (actual time=214.432..231.727 rows=10470 loops=1)
+                     Merge Cond: (customer.c_customer_sk = dn.ss_customer_sk)
+                     ->  Index Scan using customer_pkey on customer  (cost=0.29..5482.34 rows=100000 width=60) (actual time=0.010..12.445 rows=100000 loops=1)
+                     ->  Sort  (cost=71205.92..71212.33 rows=2563 width=81) (actual time=214.408..214.852 rows=10471 loops=1)
+                           Sort Key: dn.ss_customer_sk
+                           Sort Method: quicksort  Memory: 1024kB
+                           ->  Subquery Scan on dn  (cost=70672.75..71060.81 rows=2563 width=81) (actual time=197.330..212.491 rows=10838 loops=1)
+                                 ->  Finalize GroupAggregate  (cost=70672.75..71035.18 rows=2563 width=85) (actual time=197.329..212.034 rows=10838 loops=1)
+                                       Group Key: store_sales.ss_ticket_number, store_sales.ss_customer_sk, store_sales.ss_addr_sk, customer_address.ca_city
+                                       ->  Gather Merge  (cost=70672.75..70954.01 rows=2136 width=85) (actual time=197.321..205.249 rows=10920 loops=1)
+                                             Workers Planned: 2
+                                             Workers Launched: 2
+                                             ->  Partial GroupAggregate  (cost=69672.73..69707.44 rows=1068 width=85) (actual time=195.427..202.313 rows=3640 loops=3)
+                                                   Group Key: store_sales.ss_ticket_number, store_sales.ss_customer_sk, store_sales.ss_addr_sk, customer_address.ca_city
+                                                   ->  Sort  (cost=69672.73..69675.40 rows=1068 width=30) (actual time=195.412..196.273 rows=38306 loops=3)
+                                                         Sort Key: store_sales.ss_ticket_number, store_sales.ss_customer_sk, store_sales.ss_addr_sk, customer_address.ca_city
+                                                         Sort Method: quicksort  Memory: 3439kB
+                                                         Worker 0:  Sort Method: quicksort  Memory: 3461kB
+                                                         Worker 1:  Sort Method: quicksort  Memory: 3469kB
+                                                         ->  Nested Loop  (cost=2309.70..69619.01 rows=1068 width=30) (actual time=3.193..184.431 rows=38306 loops=3)
+                                                               ->  Hash Join  (cost=2309.41..69273.24 rows=1118 width=21) (actual time=3.181..152.815 rows=38552 loops=3)
+                                                                     Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                                                     ->  Hash Join  (cost=2308.06..69267.79 rows=1170 width=25) (actual time=3.147..149.635 rows=39024 loops=3)
+                                                                           Hash Cond: (store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk)
+                                                                           ->  Parallel Hash Join  (cost=2124.56..69071.42 rows=4898 width=29) (actual time=2.547..138.468 rows=159081 loops=3)
+                                                                                 Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                                                 ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=33) (actual time=0.030..72.183 rows=960135 loops=3)
+                                                                                 ->  Parallel Hash  (cost=2122.26..2122.26 rows=184 width=4) (actual time=2.460..2.460 rows=105 loops=3)
+                                                                                       Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                                                       ->  Parallel Seq Scan on date_dim  (cost=0.00..2122.26 rows=184 width=4) (actual time=1.166..2.419 rows=105 loops=3)
+                                                                                             Filter: ((d_dow = ANY ('{6,0}'::integer[])) AND (d_year = ANY ('{2000,2001,2002}'::integer[])))
+                                                                                             Rows Removed by Filter: 24245
+                                                                           ->  Hash  (cost=161.00..161.00 rows=1800 width=4) (actual time=0.531..0.531 rows=1800 loops=3)
+                                                                                 Buckets: 2048  Batches: 1  Memory Usage: 80kB
+                                                                                 ->  Seq Scan on household_demographics  (cost=0.00..161.00 rows=1800 width=4) (actual time=0.014..0.447 rows=1800 loops=3)
+                                                                                       Filter: ((hd_dep_count = 8) OR (hd_vehicle_count = 0))
+                                                                                       Rows Removed by Filter: 5400
+                                                                     ->  Hash  (cost=1.20..1.20 rows=12 width=4) (actual time=0.023..0.023 rows=12 loops=3)
+                                                                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                           ->  Seq Scan on store  (cost=0.00..1.20 rows=12 width=4) (actual time=0.018..0.020 rows=12 loops=3)
+                                                                                 Filter: ((s_city)::text = ANY ('{Midway,Fairview,Fairview,Midway,Fairview}'::text[]))
+                                                               ->  Index Scan using customer_address_pkey on customer_address  (cost=0.29..0.31 rows=1 width=13) (actual time=0.001..0.001 rows=1 loops=115656)
+                                                                     Index Cond: (ca_address_sk = store_sales.ss_addr_sk)
+               ->  Index Scan using customer_address_pkey on customer_address current_addr  (cost=0.29..0.36 rows=1 width=13) (actual time=0.001..0.001 rows=1 loops=10470)
+                     Index Cond: (ca_address_sk = customer.c_current_addr_sk)
+ Planning Time: 4.614 ms
+ Execution Time: 244.370 ms
+(54 rows)
+

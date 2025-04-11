@@ -1,0 +1,52 @@
+                                                                                                      QUERY PLAN                                                                                                       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=49710.16..49710.41 rows=100 width=272) (actual time=1018.468..1018.525 rows=100 loops=1)
+   ->  Sort  (cost=49710.16..49710.64 rows=189 width=272) (actual time=1018.468..1018.520 rows=100 loops=1)
+         Sort Key: customer_address.ca_country, customer_address.ca_state, customer_address.ca_county, item.i_item_id
+         Sort Method: top-N heapsort  Memory: 46kB
+         ->  GroupAggregate  (cost=49695.71..49703.02 rows=189 width=272) (actual time=1008.329..1016.878 rows=7122 loops=1)
+               Group Key: item.i_item_id, customer_address.ca_country, customer_address.ca_state, customer_address.ca_county
+               Group Key: item.i_item_id, customer_address.ca_country, customer_address.ca_state
+               Group Key: item.i_item_id, customer_address.ca_country
+               Group Key: item.i_item_id
+               Group Key: ()
+               ->  Sort  (cost=49695.71..49695.82 rows=47 width=81) (actual time=1008.309..1008.449 rows=1866 loops=1)
+                     Sort Key: item.i_item_id, customer_address.ca_country, customer_address.ca_state, customer_address.ca_county
+                     Sort Method: quicksort  Memory: 254kB
+                     ->  Gather  (cost=2965.51..49694.40 rows=47 width=81) (actual time=66.749..1007.688 rows=1866 loops=1)
+                           Workers Planned: 2
+                           Workers Launched: 2
+                           ->  Nested Loop  (cost=1965.51..48689.70 rows=20 width=81) (actual time=88.545..1005.571 rows=622 loops=3)
+                                 ->  Nested Loop  (cost=1965.22..48683.53 rows=20 width=68) (actual time=88.495..1002.253 rows=622 loops=3)
+                                       ->  Nested Loop  (cost=1964.80..48665.88 rows=20 width=72) (actual time=88.246..1000.510 rows=634 loops=3)
+                                             ->  Nested Loop  (cost=1964.51..48621.62 rows=105 width=45) (actual time=50.907..995.603 rows=3314 loops=3)
+                                                   ->  Nested Loop  (cost=1964.21..48550.50 rows=218 width=37) (actual time=50.248..983.399 rows=6968 loops=3)
+                                                         ->  Parallel Hash Join  (cost=1963.79..46995.20 rows=2961 width=37) (actual time=42.223..92.041 rows=95569 loops=3)
+                                                               Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=600659 width=41) (actual time=0.020..46.170 rows=480516 loops=3)
+                                                               ->  Parallel Hash  (cost=1961.12..1961.12 rows=213 width=4) (actual time=4.176..4.176 rows=122 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                                     ->  Parallel Seq Scan on date_dim  (cost=0.00..1961.12 rows=213 width=4) (actual time=2.190..4.146 rows=122 loops=3)
+                                                                           Filter: (d_year = 2001)
+                                                                           Rows Removed by Filter: 24228
+                                                         ->  Index Scan using customer_demographics_pkey on customer_demographics cd1  (cost=0.43..0.53 rows=1 width=8) (actual time=0.009..0.009 rows=0 loops=286707)
+                                                               Index Cond: (cd_demo_sk = catalog_sales.cs_bill_cdemo_sk)
+                                                               Filter: ((cd_gender = 'F'::bpchar) AND (cd_education_status = 'Primary'::bpchar))
+                                                               Rows Removed by Filter: 1
+                                                   ->  Index Scan using customer_pkey on customer  (cost=0.29..0.33 rows=1 width=16) (actual time=0.002..0.002 rows=0 loops=20904)
+                                                         Index Cond: (c_customer_sk = catalog_sales.cs_bill_customer_sk)
+                                                         Filter: (c_birth_month = ANY ('{1,3,7,11,10,4}'::integer[]))
+                                                         Rows Removed by Filter: 1
+                                             ->  Index Scan using customer_address_pkey on customer_address  (cost=0.29..0.42 rows=1 width=35) (actual time=0.001..0.001 rows=0 loops=9942)
+                                                   Index Cond: (ca_address_sk = customer.c_current_addr_sk)
+                                                   Filter: (ca_state = ANY ('{AL,MO,TN,GA,MT,IN,CA}'::bpchar[]))
+                                                   Rows Removed by Filter: 1
+                                       ->  Index Only Scan using customer_demographics_pkey on customer_demographics cd2  (cost=0.43..0.88 rows=1 width=4) (actual time=0.003..0.003 rows=1 loops=1902)
+                                             Index Cond: (cd_demo_sk = customer.c_current_cdemo_sk)
+                                             Heap Fetches: 0
+                                 ->  Index Scan using item_pkey on item  (cost=0.29..0.31 rows=1 width=21) (actual time=0.005..0.005 rows=1 loops=1866)
+                                       Index Cond: (i_item_sk = catalog_sales.cs_item_sk)
+ Planning Time: 5.435 ms
+ Execution Time: 1018.611 ms
+(48 rows)
+

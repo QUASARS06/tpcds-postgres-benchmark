@@ -1,0 +1,62 @@
+                                                                                         QUERY PLAN                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=140416.12..140444.70 rows=100 width=163) (actual time=188.214..189.331 rows=100 loops=1)
+   ->  Finalize GroupAggregate  (cost=140416.12..144068.42 rows=12777 width=163) (actual time=188.213..189.326 rows=100 loops=1)
+         Group Key: ('catalog'::text), ('cs_bill_customer_sk'::text), date_dim.d_year, date_dim.d_qoy, item.i_category
+         ->  Gather Merge  (cost=140416.12..143397.63 rows=25554 width=163) (actual time=188.208..189.273 rows=101 loops=1)
+               Workers Planned: 2
+               Workers Launched: 2
+               ->  Sort  (cost=139416.09..139448.04 rows=12777 width=163) (actual time=186.030..186.043 rows=194 loops=3)
+                     Sort Key: ('catalog'::text), ('cs_bill_customer_sk'::text), date_dim.d_year, date_dim.d_qoy, item.i_category
+                     Sort Method: quicksort  Memory: 79kB
+                     Worker 0:  Sort Method: quicksort  Memory: 67kB
+                     Worker 1:  Sort Method: quicksort  Memory: 105kB
+                     ->  Partial HashAggregate  (cost=138384.91..138544.62 rows=12777 width=163) (actual time=185.496..185.610 rows=322 loops=3)
+                           Group Key: ('catalog'::text), ('cs_bill_customer_sk'::text), date_dim.d_year, date_dim.d_qoy, item.i_category
+                           Batches: 1  Memory Usage: 657kB
+                           Worker 0:  Batches: 1  Memory Usage: 529kB
+                           Worker 1:  Batches: 1  Memory Usage: 657kB
+                           ->  Parallel Append  (cost=1522.53..137453.24 rows=53238 width=129) (actual time=9.601..178.164 rows=22794 loops=3)
+                                 ->  Parallel Hash Join  (cost=3913.06..47380.65 rows=2470 width=129) (actual time=21.088..145.736 rows=3429 loops=1)
+                                       Hash Cond: (catalog_sales.cs_item_sk = item.i_item_sk)
+                                       ->  Parallel Hash Join  (cost=2390.83..45851.93 rows=2470 width=18) (actual time=14.846..137.825 rows=3429 loops=1)
+                                             Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                                             ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=2483 width=14) (actual time=0.101..121.754 rows=7029 loops=1)
+                                                   Filter: (cs_bill_customer_sk IS NULL)
+                                                   Rows Removed by Filter: 1434519
+                                             ->  Parallel Hash  (cost=1853.70..1853.70 rows=42970 width=12) (actual time=14.543..14.544 rows=73049 loops=1)
+                                                   Buckets: 131072  Batches: 1  Memory Usage: 4480kB
+                                                   ->  Parallel Seq Scan on date_dim  (cost=0.00..1853.70 rows=42970 width=12) (actual time=0.003..7.091 rows=73049 loops=1)
+                                       ->  Parallel Hash  (cost=1389.88..1389.88 rows=10588 width=55) (actual time=6.179..6.180 rows=18000 loops=1)
+                                             Buckets: 32768  Batches: 1  Memory Usage: 1824kB
+                                             ->  Parallel Seq Scan on item  (cost=0.00..1389.88 rows=10588 width=55) (actual time=0.005..4.304 rows=18000 loops=1)
+                                 ->  Parallel Hash Join  (cost=1522.53..67437.04 rows=50728 width=129) (actual time=2.122..99.910 rows=21619 loops=3)
+                                       Hash Cond: (store_sales.ss_item_sk = item_1.i_item_sk)
+                                       ->  Nested Loop  (cost=0.30..65781.61 rows=50728 width=18) (actual time=0.093..90.420 rows=21619 loops=3)
+                                             ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=53096 width=14) (actual time=0.062..78.031 rows=43251 loops=3)
+                                                   Filter: (ss_customer_sk IS NULL)
+                                                   Rows Removed by Filter: 916884
+                                             ->  Memoize  (cost=0.30..0.37 rows=1 width=12) (actual time=0.000..0.000 rows=0 loops=129752)
+                                                   Cache Key: store_sales.ss_sold_date_sk
+                                                   Cache Mode: logical
+                                                   Hits: 38116  Misses: 1820  Evictions: 0  Overflows: 0  Memory Usage: 200kB
+                                                   Worker 0:  Hits: 73021  Misses: 1824  Evictions: 0  Overflows: 0  Memory Usage: 200kB
+                                                   Worker 1:  Hits: 13280  Misses: 1691  Evictions: 0  Overflows: 0  Memory Usage: 185kB
+                                                   ->  Index Scan using date_dim_pkey on date_dim date_dim_1  (cost=0.29..0.36 rows=1 width=12) (actual time=0.001..0.001 rows=1 loops=5335)
+                                                         Index Cond: (d_date_sk = store_sales.ss_sold_date_sk)
+                                       ->  Parallel Hash  (cost=1389.88..1389.88 rows=10588 width=55) (actual time=1.988..1.988 rows=6000 loops=3)
+                                             Buckets: 32768  Batches: 1  Memory Usage: 1824kB
+                                             ->  Parallel Seq Scan on item item_1  (cost=0.00..1389.88 rows=10588 width=55) (actual time=0.003..4.072 rows=18000 loops=1)
+                                 ->  Nested Loop  (cost=0.58..22369.37 rows=40 width=129) (actual time=1.594..86.416 rows=96 loops=1)
+                                       ->  Nested Loop  (cost=0.29..22071.97 rows=40 width=61) (actual time=1.463..86.122 rows=184 loops=1)
+                                             ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=40 width=14) (actual time=1.449..84.991 rows=184 loops=1)
+                                                   Filter: (ws_promo_sk IS NULL)
+                                                   Rows Removed by Filter: 719200
+                                             ->  Index Scan using item_pkey on item item_2  (cost=0.29..6.26 rows=1 width=55) (actual time=0.005..0.005 rows=1 loops=184)
+                                                   Index Cond: (i_item_sk = web_sales.ws_item_sk)
+                                       ->  Index Scan using date_dim_pkey on date_dim date_dim_2  (cost=0.29..7.44 rows=1 width=12) (actual time=0.001..0.001 rows=1 loops=184)
+                                             Index Cond: (d_date_sk = web_sales.ws_sold_date_sk)
+ Planning Time: 0.936 ms
+ Execution Time: 189.509 ms
+(58 rows)
+

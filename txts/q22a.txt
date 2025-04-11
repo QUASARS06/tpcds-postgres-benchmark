@@ -1,0 +1,37 @@
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=144821.35..144821.60 rows=100 width=236) (actual time=4875.541..4885.559 rows=100 loops=1)
+   ->  Sort  (cost=144821.35..145000.99 rows=71857 width=236) (actual time=4875.540..4885.554 rows=100 loops=1)
+         Sort Key: (avg(inventory.inv_quantity_on_hand)), item.i_product_name, item.i_brand, item.i_class, item.i_category
+         Sort Method: top-N heapsort  Memory: 63kB
+         ->  GroupAggregate  (cost=133961.14..142075.03 rows=71857 width=236) (actual time=3007.900..4879.085 rows=35968 loops=1)
+               Group Key: item.i_product_name, item.i_brand, item.i_class, item.i_category
+               Group Key: item.i_product_name, item.i_brand, item.i_class
+               Group Key: item.i_product_name, item.i_brand
+               Group Key: item.i_product_name
+               Group Key: ()
+               ->  Gather Merge  (cost=133961.14..140477.44 rows=55950 width=208) (actual time=3007.697..4283.080 rows=2340000 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     ->  Sort  (cost=132961.12..133019.40 rows=23312 width=208) (actual time=2999.139..3448.213 rows=780000 loops=3)
+                           Sort Key: item.i_product_name, item.i_brand, item.i_class, item.i_category
+                           Sort Method: external merge  Disk: 166176kB
+                           Worker 0:  Sort Method: external merge  Disk: 166176kB
+                           Worker 1:  Sort Method: external merge  Disk: 165264kB
+                           ->  Parallel Hash Join  (cost=3593.34..128956.48 rows=23312 width=208) (actual time=463.519..1223.586 rows=780000 loops=3)
+                                 Hash Cond: (inventory.inv_item_sk = item.i_item_sk)
+                                 ->  Parallel Hash Join  (cost=2071.11..127373.04 rows=23312 width=8) (actual time=460.359..1117.268 rows=780000 loops=3)
+                                       Hash Cond: (inventory.inv_date_sk = date_dim.d_date_sk)
+                                       ->  Parallel Seq Scan on inventory  (cost=0.00..112455.59 rows=4893559 width=12) (actual time=0.376..890.148 rows=3915000 loops=3)
+                                       ->  Parallel Hash  (cost=2068.55..2068.55 rows=205 width=4) (actual time=2.094..2.094 rows=122 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                             ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=205 width=4) (actual time=0.932..2.057 rows=122 loops=3)
+                                                   Filter: ((d_month_seq >= 1200) AND (d_month_seq <= 1211))
+                                                   Rows Removed by Filter: 24228
+                                 ->  Parallel Hash  (cost=1389.88..1389.88 rows=10588 width=208) (actual time=3.088..3.088 rows=6000 loops=3)
+                                       Buckets: 32768  Batches: 1  Memory Usage: 4544kB
+                                       ->  Parallel Seq Scan on item  (cost=0.00..1389.88 rows=10588 width=208) (actual time=0.004..1.974 rows=6000 loops=3)
+ Planning Time: 0.590 ms
+ Execution Time: 4889.350 ms
+(33 rows)
+

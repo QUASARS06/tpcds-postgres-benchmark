@@ -1,0 +1,69 @@
+                                                                                         QUERY PLAN                                                                                         
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=560602.57..560602.57 rows=1 width=72) (actual time=19168.418..19168.581 rows=1 loops=1)
+   CTE ws_wh
+     ->  Hash Join  (cost=37821.14..198837.57 rows=7237010 width=12) (actual time=149.551..874.263 rows=6644004 loops=1)
+           Hash Cond: (ws1_1.ws_order_number = ws2.ws_order_number)
+           Join Filter: (ws1_1.ws_warehouse_sk <> ws2.ws_warehouse_sk)
+           Rows Removed by Join Filter: 2381030
+           ->  Seq Scan on web_sales ws1_1  (cost=0.00..26017.84 rows=719384 width=8) (actual time=0.001..93.600 rows=719384 loops=1)
+           ->  Hash  (cost=26017.84..26017.84 rows=719384 width=8) (actual time=148.958..148.961 rows=719384 loops=1)
+                 Buckets: 262144  Batches: 8  Memory Usage: 5563kB
+                 ->  Seq Scan on web_sales ws2  (cost=0.00..26017.84 rows=719384 width=8) (actual time=0.001..97.734 rows=719384 loops=1)
+   ->  Sort  (cost=361765.00..361765.00 rows=1 width=72) (actual time=19168.418..19168.577 rows=1 loops=1)
+         Sort Key: (count(DISTINCT ws1.ws_order_number))
+         Sort Method: quicksort  Memory: 25kB
+         ->  Aggregate  (cost=361764.98..361764.99 rows=1 width=72) (actual time=19168.410..19168.569 rows=1 loops=1)
+               ->  Sort  (cost=361764.95..361764.96 rows=2 width=16) (actual time=19168.391..19168.552 rows=73 loops=1)
+                     Sort Key: ws1.ws_order_number
+                     Sort Method: quicksort  Memory: 28kB
+                     ->  Nested Loop Semi Join  (cost=164378.82..361764.94 rows=2 width=16) (actual time=2493.997..19168.402 rows=73 loops=1)
+                           Join Filter: (ws1.ws_order_number = web_returns.wr_order_number)
+                           ->  Hash Join  (cost=163840.26..188446.94 rows=2 width=20) (actual time=2085.716..2086.569 rows=102 loops=1)
+                                 Hash Cond: (ws1.ws_order_number = ws_wh.ws_order_number)
+                                 ->  Gather  (cost=1003.03..25609.68 rows=4 width=16) (actual time=0.262..0.765 rows=102 loops=1)
+                                       Workers Planned: 2
+                                       Workers Launched: 2
+                                       ->  Nested Loop  (cost=3.03..24609.28 rows=2 width=16) (actual time=4.286..51.987 rows=34 loops=3)
+                                             ->  Nested Loop  (cost=2.74..24596.60 rows=40 width=20) (actual time=0.168..50.040 rows=739 loops=3)
+                                                   ->  Hash Join  (cost=2.44..22721.83 rows=49950 width=24) (actual time=0.064..43.492 rows=31830 loops=3)
+                                                         Hash Cond: (ws1.ws_web_site_sk = web_site.web_site_sk)
+                                                         ->  Parallel Seq Scan on web_sales ws1  (cost=0.00..21821.43 rows=299743 width=28) (actual time=0.021..22.129 rows=239795 loops=3)
+                                                         ->  Hash  (cost=2.38..2.38 rows=5 width=4) (actual time=0.026..0.026 rows=5 loops=3)
+                                                               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                               ->  Seq Scan on web_site  (cost=0.00..2.38 rows=5 width=4) (actual time=0.019..0.023 rows=5 loops=3)
+                                                                     Filter: (web_company_name = 'pri'::bpchar)
+                                                                     Rows Removed by Filter: 25
+                                                   ->  Memoize  (cost=0.30..0.33 rows=1 width=4) (actual time=0.000..0.000 rows=0 loops=95491)
+                                                         Cache Key: ws1.ws_ship_date_sk
+                                                         Cache Mode: logical
+                                                         Hits: 4  Misses: 79  Evictions: 0  Overflows: 0  Memory Usage: 6kB
+                                                         Worker 0:  Hits: 46227  Misses: 1938  Evictions: 0  Overflows: 0  Memory Usage: 131kB
+                                                         Worker 1:  Hits: 45306  Misses: 1937  Evictions: 0  Overflows: 0  Memory Usage: 131kB
+                                                         ->  Index Scan using date_dim_pkey on date_dim  (cost=0.29..0.32 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=3954)
+                                                               Index Cond: (d_date_sk = ws1.ws_ship_date_sk)
+                                                               Filter: ((d_date >= '2001-04-01'::date) AND (d_date <= '2001-05-31'::date))
+                                                               Rows Removed by Filter: 1
+                                             ->  Index Scan using customer_address_pkey on customer_address  (cost=0.29..0.32 rows=1 width=4) (actual time=0.003..0.003 rows=0 loops=2216)
+                                                   Index Cond: (ca_address_sk = ws1.ws_ship_addr_sk)
+                                                   Filter: (ca_state = 'VA'::bpchar)
+                                                   Rows Removed by Filter: 1
+                                 ->  Hash  (cost=162834.73..162834.73 rows=200 width=4) (actual time=2085.446..2085.446 rows=60000 loops=1)
+                                       Buckets: 65536 (originally 1024)  Batches: 1 (originally 1)  Memory Usage: 2622kB
+                                       ->  HashAggregate  (cost=162832.73..162834.73 rows=200 width=4) (actual time=2079.323..2082.527 rows=60000 loops=1)
+                                             Group Key: ws_wh.ws_order_number
+                                             Batches: 1  Memory Usage: 5665kB
+                                             ->  CTE Scan on ws_wh  (cost=0.00..144740.20 rows=7237010 width=4) (actual time=149.553..1718.937 rows=6644004 loops=1)
+                           ->  Hash Join  (cost=538.56..172422.47 rows=394 width=8) (actual time=167.463..167.463 rows=1 loops=102)
+                                 Hash Cond: (ws_wh_1.ws_order_number = web_returns.wr_order_number)
+                                 Join Filter: (ws_wh.ws_order_number = ws_wh_1.ws_order_number)
+                                 ->  CTE Scan on ws_wh ws_wh_1  (cost=0.00..144740.20 rows=7237010 width=4) (actual time=0.005..115.370 rows=2843802 loops=73)
+                                 ->  Hash  (cost=538.54..538.54 rows=2 width=4) (actual time=1.294..1.294 rows=1 loops=102)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       ->  Index Only Scan using web_returns_pkey on web_returns  (cost=0.29..538.54 rows=2 width=4) (actual time=0.713..1.292 rows=1 loops=102)
+                                             Index Cond: (wr_order_number = ws_wh.ws_order_number)
+                                             Heap Fetches: 0
+ Planning Time: 1.169 ms
+ Execution Time: 19171.993 ms
+(65 rows)
+

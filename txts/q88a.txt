@@ -1,0 +1,229 @@
+                                                                                                                           QUERY PLAN                                                                                                                           
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=563642.66..563642.81 rows=1 width=64) (actual time=1087.896..1088.852 rows=1 loops=1)
+   ->  Nested Loop  (cost=493187.57..493187.70 rows=1 width=56) (actual time=956.733..956.985 rows=1 loops=1)
+         ->  Nested Loop  (cost=422732.48..422732.59 rows=1 width=48) (actual time=823.846..824.077 rows=1 loops=1)
+               ->  Nested Loop  (cost=352276.40..352276.49 rows=1 width=40) (actual time=690.841..691.045 rows=1 loops=1)
+                     ->  Nested Loop  (cost=281820.82..281820.89 rows=1 width=32) (actual time=555.832..556.008 rows=1 loops=1)
+                           ->  Nested Loop  (cost=211364.18..211364.23 rows=1 width=24) (actual time=422.455..422.602 rows=1 loops=1)
+                                 ->  Nested Loop  (cost=140909.59..140909.62 rows=1 width=16) (actual time=289.491..289.615 rows=1 loops=1)
+                                       ->  Finalize Aggregate  (cost=70454.00..70454.01 rows=1 width=8) (actual time=156.075..156.160 rows=1 loops=1)
+                                             ->  Gather  (cost=70453.79..70454.00 rows=2 width=8) (actual time=156.006..156.153 rows=3 loops=1)
+                                                   Workers Planned: 2
+                                                   Workers Launched: 2
+                                                   ->  Partial Aggregate  (cost=69453.79..69453.80 rows=1 width=8) (actual time=154.394..154.400 rows=1 loops=3)
+                                                         ->  Hash Join  (cost=2431.93..69453.07 rows=286 width=0) (actual time=31.494..154.376 rows=468 loops=3)
+                                                               Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                                               ->  Hash Join  (cost=2430.77..69439.30 rows=3592 width=4) (actual time=28.717..154.079 rows=2853 loops=3)
+                                                                     Hash Cond: (store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk)
+                                                                     ->  Parallel Hash Join  (cost=2183.37..69130.19 rows=23495 width=8) (actual time=27.818..152.099 rows=17965 loops=3)
+                                                                           Hash Cond: (store_sales.ss_sold_time_sk = time_dim.t_time_sk)
+                                                                           ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.047..76.572 rows=960135 loops=3)
+                                                                           ->  Parallel Hash  (cost=2170.35..2170.35 rows=1041 width=4) (actual time=27.594..27.594 rows=600 loops=3)
+                                                                                 Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                                                                 ->  Parallel Seq Scan on time_dim  (cost=0.00..2170.35 rows=1041 width=4) (actual time=8.076..27.488 rows=600 loops=3)
+                                                                                       Filter: ((t_minute >= 30) AND (t_hour = 8))
+                                                                                       Rows Removed by Filter: 28200
+                                                                     ->  Hash  (cost=233.00..233.00 rows=1152 width=4) (actual time=0.741..0.741 rows=1200 loops=3)
+                                                                           Buckets: 2048  Batches: 1  Memory Usage: 59kB
+                                                                           ->  Seq Scan on household_demographics  (cost=0.00..233.00 rows=1152 width=4) (actual time=0.067..0.666 rows=1200 loops=3)
+                                                                                 Filter: (((hd_dep_count = 0) AND (hd_vehicle_count <= 2)) OR ((hd_dep_count = '-1'::integer) AND (hd_vehicle_count <= 1)) OR ((hd_dep_count = 3) AND (hd_vehicle_count <= 5)))
+                                                                                 Rows Removed by Filter: 6000
+                                                               ->  Hash  (cost=1.15..1.15 rows=1 width=4) (actual time=0.055..0.055 rows=1 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                     ->  Seq Scan on store  (cost=0.00..1.15 rows=1 width=4) (actual time=0.046..0.047 rows=1 loops=3)
+                                                                           Filter: ((s_store_name)::text = 'ese'::text)
+                                                                           Rows Removed by Filter: 11
+                                       ->  Finalize Aggregate  (cost=70455.58..70455.59 rows=1 width=8) (actual time=133.394..133.432 rows=1 loops=1)
+                                             ->  Gather  (cost=70455.37..70455.58 rows=2 width=8) (actual time=133.310..133.426 rows=3 loops=1)
+                                                   Workers Planned: 2
+                                                   Workers Launched: 2
+                                                   ->  Partial Aggregate  (cost=69455.37..69455.38 rows=1 width=8) (actual time=131.479..131.484 rows=1 loops=3)
+                                                         ->  Hash Join  (cost=2432.15..69454.64 rows=291 width=0) (actual time=3.467..131.445 rows=931 loops=3)
+                                                               Hash Cond: (store_sales_1.ss_store_sk = store_1.s_store_sk)
+                                                               ->  Hash Join  (cost=2430.99..69440.64 rows=3657 width=4) (actual time=3.059..131.012 rows=6156 loops=3)
+                                                                     Hash Cond: (store_sales_1.ss_hdemo_sk = household_demographics_1.hd_demo_sk)
+                                                                     ->  Parallel Hash Join  (cost=2183.59..69130.42 rows=23920 width=8) (actual time=2.224..127.999 rows=37349 loops=3)
+                                                                           Hash Cond: (store_sales_1.ss_sold_time_sk = time_dim_1.t_time_sk)
+                                                                           ->  Parallel Seq Scan on store_sales store_sales_1  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.046..76.648 rows=960135 loops=3)
+                                                                           ->  Parallel Hash  (cost=2170.35..2170.35 rows=1059 width=4) (actual time=2.076..2.076 rows=600 loops=3)
+                                                                                 Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                                                                 ->  Parallel Seq Scan on time_dim time_dim_1  (cost=0.00..2170.35 rows=1059 width=4) (actual time=0.683..1.968 rows=600 loops=3)
+                                                                                       Filter: ((t_minute < 30) AND (t_hour = 9))
+                                                                                       Rows Removed by Filter: 28200
+                                                                     ->  Hash  (cost=233.00..233.00 rows=1152 width=4) (actual time=0.690..0.691 rows=1200 loops=3)
+                                                                           Buckets: 2048  Batches: 1  Memory Usage: 59kB
+                                                                           ->  Seq Scan on household_demographics household_demographics_1  (cost=0.00..233.00 rows=1152 width=4) (actual time=0.015..0.610 rows=1200 loops=3)
+                                                                                 Filter: (((hd_dep_count = 0) AND (hd_vehicle_count <= 2)) OR ((hd_dep_count = '-1'::integer) AND (hd_vehicle_count <= 1)) OR ((hd_dep_count = 3) AND (hd_vehicle_count <= 5)))
+                                                                                 Rows Removed by Filter: 6000
+                                                               ->  Hash  (cost=1.15..1.15 rows=1 width=4) (actual time=0.026..0.026 rows=1 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                     ->  Seq Scan on store store_1  (cost=0.00..1.15 rows=1 width=4) (actual time=0.020..0.022 rows=1 loops=3)
+                                                                           Filter: ((s_store_name)::text = 'ese'::text)
+                                                                           Rows Removed by Filter: 11
+                                 ->  Finalize Aggregate  (cost=70454.60..70454.61 rows=1 width=8) (actual time=132.960..132.983 rows=1 loops=1)
+                                       ->  Gather  (cost=70454.38..70454.59 rows=2 width=8) (actual time=132.885..132.980 rows=3 loops=1)
+                                             Workers Planned: 2
+                                             Workers Launched: 2
+                                             ->  Partial Aggregate  (cost=69454.38..69454.39 rows=1 width=8) (actual time=131.131..131.134 rows=1 loops=3)
+                                                   ->  Hash Join  (cost=2432.02..69453.66 rows=288 width=0) (actual time=4.008..131.095 rows=1032 loops=3)
+                                                         Hash Cond: (store_sales_2.ss_store_sk = store_2.s_store_sk)
+                                                         ->  Hash Join  (cost=2430.85..69439.80 rows=3616 width=4) (actual time=2.463..130.653 rows=6165 loops=3)
+                                                               Hash Cond: (store_sales_2.ss_hdemo_sk = household_demographics_2.hd_demo_sk)
+                                                               ->  Parallel Hash Join  (cost=2183.45..69130.28 rows=23654 width=8) (actual time=1.898..127.876 rows=36492 loops=3)
+                                                                     Hash Cond: (store_sales_2.ss_sold_time_sk = time_dim_2.t_time_sk)
+                                                                     ->  Parallel Seq Scan on store_sales store_sales_2  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.036..76.825 rows=960135 loops=3)
+                                                                     ->  Parallel Hash  (cost=2170.35..2170.35 rows=1048 width=4) (actual time=1.807..1.807 rows=600 loops=3)
+                                                                           Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                                                           ->  Parallel Seq Scan on time_dim time_dim_2  (cost=0.00..2170.35 rows=1048 width=4) (actual time=1.293..1.764 rows=600 loops=3)
+                                                                                 Filter: ((t_minute >= 30) AND (t_hour = 9))
+                                                                                 Rows Removed by Filter: 28200
+                                                               ->  Hash  (cost=233.00..233.00 rows=1152 width=4) (actual time=0.517..0.517 rows=1200 loops=3)
+                                                                     Buckets: 2048  Batches: 1  Memory Usage: 59kB
+                                                                     ->  Seq Scan on household_demographics household_demographics_2  (cost=0.00..233.00 rows=1152 width=4) (actual time=0.013..0.463 rows=1200 loops=3)
+                                                                           Filter: (((hd_dep_count = 0) AND (hd_vehicle_count <= 2)) OR ((hd_dep_count = '-1'::integer) AND (hd_vehicle_count <= 1)) OR ((hd_dep_count = 3) AND (hd_vehicle_count <= 5)))
+                                                                           Rows Removed by Filter: 6000
+                                                         ->  Hash  (cost=1.15..1.15 rows=1 width=4) (actual time=0.024..0.024 rows=1 loops=3)
+                                                               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                               ->  Seq Scan on store store_2  (cost=0.00..1.15 rows=1 width=4) (actual time=0.020..0.022 rows=1 loops=3)
+                                                                     Filter: ((s_store_name)::text = 'ese'::text)
+                                                                     Rows Removed by Filter: 11
+                           ->  Finalize Aggregate  (cost=70456.63..70456.64 rows=1 width=8) (actual time=133.373..133.399 rows=1 loops=1)
+                                 ->  Gather  (cost=70456.42..70456.63 rows=2 width=8) (actual time=133.300..133.395 rows=3 loops=1)
+                                       Workers Planned: 2
+                                       Workers Launched: 2
+                                       ->  Partial Aggregate  (cost=69456.42..69456.43 rows=1 width=8) (actual time=131.622..131.625 rows=1 loops=3)
+                                             ->  Hash Join  (cost=2432.32..69455.68 rows=295 width=0) (actual time=4.032..131.576 rows=1435 loops=3)
+                                                   Hash Cond: (store_sales_3.ss_store_sk = store_3.s_store_sk)
+                                                   ->  Hash Join  (cost=2431.15..69441.54 rows=3699 width=4) (actual time=2.553..130.973 rows=9122 loops=3)
+                                                         Hash Cond: (store_sales_3.ss_hdemo_sk = household_demographics_3.hd_demo_sk)
+                                                         ->  Parallel Hash Join  (cost=2183.75..69130.58 rows=24199 width=8) (actual time=1.867..127.118 rows=55404 loops=3)
+                                                               Hash Cond: (store_sales_3.ss_sold_time_sk = time_dim_3.t_time_sk)
+                                                               ->  Parallel Seq Scan on store_sales store_sales_3  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.038..74.819 rows=960135 loops=3)
+                                                               ->  Parallel Hash  (cost=2170.35..2170.35 rows=1072 width=4) (actual time=1.785..1.785 rows=600 loops=3)
+                                                                     Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                                                     ->  Parallel Seq Scan on time_dim time_dim_3  (cost=0.00..2170.35 rows=1072 width=4) (actual time=1.323..1.738 rows=600 loops=3)
+                                                                           Filter: ((t_minute < 30) AND (t_hour = 10))
+                                                                           Rows Removed by Filter: 28200
+                                                         ->  Hash  (cost=233.00..233.00 rows=1152 width=4) (actual time=0.515..0.515 rows=1200 loops=3)
+                                                               Buckets: 2048  Batches: 1  Memory Usage: 59kB
+                                                               ->  Seq Scan on household_demographics household_demographics_3  (cost=0.00..233.00 rows=1152 width=4) (actual time=0.013..0.461 rows=1200 loops=3)
+                                                                     Filter: (((hd_dep_count = 0) AND (hd_vehicle_count <= 2)) OR ((hd_dep_count = '-1'::integer) AND (hd_vehicle_count <= 1)) OR ((hd_dep_count = 3) AND (hd_vehicle_count <= 5)))
+                                                                     Rows Removed by Filter: 6000
+                                                   ->  Hash  (cost=1.15..1.15 rows=1 width=4) (actual time=0.026..0.026 rows=1 loops=3)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                         ->  Seq Scan on store store_3  (cost=0.00..1.15 rows=1 width=4) (actual time=0.021..0.023 rows=1 loops=3)
+                                                               Filter: ((s_store_name)::text = 'ese'::text)
+                                                               Rows Removed by Filter: 11
+                     ->  Finalize Aggregate  (cost=70455.58..70455.59 rows=1 width=8) (actual time=135.008..135.034 rows=1 loops=1)
+                           ->  Gather  (cost=70455.37..70455.58 rows=2 width=8) (actual time=134.935..135.032 rows=3 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Partial Aggregate  (cost=69455.37..69455.38 rows=1 width=8) (actual time=132.028..132.030 rows=1 loops=3)
+                                       ->  Hash Join  (cost=2432.15..69454.64 rows=291 width=0) (actual time=3.799..131.981 rows=1429 loops=3)
+                                             Hash Cond: (store_sales_4.ss_store_sk = store_4.s_store_sk)
+                                             ->  Hash Join  (cost=2430.99..69440.64 rows=3657 width=4) (actual time=2.910..131.393 rows=8896 loops=3)
+                                                   Hash Cond: (store_sales_4.ss_hdemo_sk = household_demographics_4.hd_demo_sk)
+                                                   ->  Parallel Hash Join  (cost=2183.59..69130.42 rows=23920 width=8) (actual time=2.141..127.561 rows=55096 loops=3)
+                                                         Hash Cond: (store_sales_4.ss_sold_time_sk = time_dim_4.t_time_sk)
+                                                         ->  Parallel Seq Scan on store_sales store_sales_4  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.040..75.165 rows=960135 loops=3)
+                                                         ->  Parallel Hash  (cost=2170.35..2170.35 rows=1059 width=4) (actual time=2.070..2.071 rows=600 loops=3)
+                                                               Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                                               ->  Parallel Seq Scan on time_dim time_dim_4  (cost=0.00..2170.35 rows=1059 width=4) (actual time=1.418..2.012 rows=600 loops=3)
+                                                                     Filter: ((t_minute >= 30) AND (t_hour = 10))
+                                                                     Rows Removed by Filter: 28200
+                                                   ->  Hash  (cost=233.00..233.00 rows=1152 width=4) (actual time=0.526..0.526 rows=1200 loops=3)
+                                                         Buckets: 2048  Batches: 1  Memory Usage: 59kB
+                                                         ->  Seq Scan on household_demographics household_demographics_4  (cost=0.00..233.00 rows=1152 width=4) (actual time=0.017..0.472 rows=1200 loops=3)
+                                                               Filter: (((hd_dep_count = 0) AND (hd_vehicle_count <= 2)) OR ((hd_dep_count = '-1'::integer) AND (hd_vehicle_count <= 1)) OR ((hd_dep_count = 3) AND (hd_vehicle_count <= 5)))
+                                                               Rows Removed by Filter: 6000
+                                             ->  Hash  (cost=1.15..1.15 rows=1 width=4) (actual time=0.027..0.027 rows=1 loops=3)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                   ->  Seq Scan on store store_4  (cost=0.00..1.15 rows=1 width=4) (actual time=0.023..0.024 rows=1 loops=3)
+                                                         Filter: ((s_store_name)::text = 'ese'::text)
+                                                         Rows Removed by Filter: 11
+               ->  Finalize Aggregate  (cost=70456.08..70456.09 rows=1 width=8) (actual time=133.002..133.024 rows=1 loops=1)
+                     ->  Gather  (cost=70455.87..70456.08 rows=2 width=8) (actual time=132.928..133.019 rows=3 loops=1)
+                           Workers Planned: 2
+                           Workers Launched: 2
+                           ->  Partial Aggregate  (cost=69455.87..69455.88 rows=1 width=8) (actual time=131.211..131.213 rows=1 loops=3)
+                                 ->  Hash Join  (cost=2432.23..69455.14 rows=292 width=0) (actual time=3.243..131.181 rows=819 loops=3)
+                                       Hash Cond: (store_sales_5.ss_store_sk = store_5.s_store_sk)
+                                       ->  Hash Join  (cost=2431.07..69441.06 rows=3677 width=4) (actual time=2.553..130.798 rows=5074 loops=3)
+                                             Hash Cond: (store_sales_5.ss_hdemo_sk = household_demographics_5.hd_demo_sk)
+                                             ->  Parallel Hash Join  (cost=2183.67..69130.49 rows=24052 width=8) (actual time=1.918..128.265 rows=31622 loops=3)
+                                                   Hash Cond: (store_sales_5.ss_sold_time_sk = time_dim_5.t_time_sk)
+                                                   ->  Parallel Seq Scan on store_sales store_sales_5  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.036..76.410 rows=960135 loops=3)
+                                                   ->  Parallel Hash  (cost=2170.35..2170.35 rows=1065 width=4) (actual time=1.809..1.809 rows=600 loops=3)
+                                                         Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                                         ->  Parallel Seq Scan on time_dim time_dim_5  (cost=0.00..2170.35 rows=1065 width=4) (actual time=1.043..1.732 rows=600 loops=3)
+                                                               Filter: ((t_minute < 30) AND (t_hour = 11))
+                                                               Rows Removed by Filter: 28200
+                                             ->  Hash  (cost=233.00..233.00 rows=1152 width=4) (actual time=0.522..0.523 rows=1200 loops=3)
+                                                   Buckets: 2048  Batches: 1  Memory Usage: 59kB
+                                                   ->  Seq Scan on household_demographics household_demographics_5  (cost=0.00..233.00 rows=1152 width=4) (actual time=0.014..0.466 rows=1200 loops=3)
+                                                         Filter: (((hd_dep_count = 0) AND (hd_vehicle_count <= 2)) OR ((hd_dep_count = '-1'::integer) AND (hd_vehicle_count <= 1)) OR ((hd_dep_count = 3) AND (hd_vehicle_count <= 5)))
+                                                         Rows Removed by Filter: 6000
+                                       ->  Hash  (cost=1.15..1.15 rows=1 width=4) (actual time=0.025..0.025 rows=1 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                             ->  Seq Scan on store store_5  (cost=0.00..1.15 rows=1 width=4) (actual time=0.021..0.023 rows=1 loops=3)
+                                                   Filter: ((s_store_name)::text = 'ese'::text)
+                                                   Rows Removed by Filter: 11
+         ->  Finalize Aggregate  (cost=70455.09..70455.10 rows=1 width=8) (actual time=132.879..132.899 rows=1 loops=1)
+               ->  Gather  (cost=70454.88..70455.09 rows=2 width=8) (actual time=132.778..132.896 rows=3 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     ->  Partial Aggregate  (cost=69454.88..69454.89 rows=1 width=8) (actual time=131.045..131.047 rows=1 loops=3)
+                           ->  Hash Join  (cost=2432.09..69454.15 rows=290 width=0) (actual time=3.459..131.002 rows=883 loops=3)
+                                 Hash Cond: (store_sales_6.ss_store_sk = store_6.s_store_sk)
+                                 ->  Hash Join  (cost=2430.93..69440.23 rows=3636 width=4) (actual time=2.920..130.582 rows=5299 loops=3)
+                                       Hash Cond: (store_sales_6.ss_hdemo_sk = household_demographics_6.hd_demo_sk)
+                                       ->  Parallel Hash Join  (cost=2183.53..69130.35 rows=23787 width=8) (actual time=1.930..127.962 rows=32213 loops=3)
+                                             Hash Cond: (store_sales_6.ss_sold_time_sk = time_dim_6.t_time_sk)
+                                             ->  Parallel Seq Scan on store_sales store_sales_6  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.032..76.407 rows=960135 loops=3)
+                                             ->  Parallel Hash  (cost=2170.35..2170.35 rows=1054 width=4) (actual time=1.791..1.791 rows=600 loops=3)
+                                                   Buckets: 2048  Batches: 1  Memory Usage: 176kB
+                                                   ->  Parallel Seq Scan on time_dim time_dim_6  (cost=0.00..2170.35 rows=1054 width=4) (actual time=0.760..1.723 rows=600 loops=3)
+                                                         Filter: ((t_minute >= 30) AND (t_hour = 11))
+                                                         Rows Removed by Filter: 28200
+                                       ->  Hash  (cost=233.00..233.00 rows=1152 width=4) (actual time=0.533..0.534 rows=1200 loops=3)
+                                             Buckets: 2048  Batches: 1  Memory Usage: 59kB
+                                             ->  Seq Scan on household_demographics household_demographics_6  (cost=0.00..233.00 rows=1152 width=4) (actual time=0.014..0.476 rows=1200 loops=3)
+                                                   Filter: (((hd_dep_count = 0) AND (hd_vehicle_count <= 2)) OR ((hd_dep_count = '-1'::integer) AND (hd_vehicle_count <= 1)) OR ((hd_dep_count = 3) AND (hd_vehicle_count <= 5)))
+                                                   Rows Removed by Filter: 6000
+                                 ->  Hash  (cost=1.15..1.15 rows=1 width=4) (actual time=0.025..0.025 rows=1 loops=3)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       ->  Seq Scan on store store_6  (cost=0.00..1.15 rows=1 width=4) (actual time=0.021..0.022 rows=1 loops=3)
+                                             Filter: ((s_store_name)::text = 'ese'::text)
+                                             Rows Removed by Filter: 11
+   ->  Finalize Aggregate  (cost=70455.09..70455.10 rows=1 width=8) (actual time=131.155..131.859 rows=1 loops=1)
+         ->  Gather  (cost=70454.88..70455.09 rows=2 width=8) (actual time=131.091..131.856 rows=3 loops=1)
+               Workers Planned: 2
+               Workers Launched: 2
+               ->  Partial Aggregate  (cost=69454.88..69454.89 rows=1 width=8) (actual time=129.202..129.203 rows=1 loops=3)
+                     ->  Hash Join  (cost=2432.09..69454.15 rows=290 width=0) (actual time=3.343..129.166 rows=947 loops=3)
+                           Hash Cond: (store_sales_7.ss_store_sk = store_7.s_store_sk)
+                           ->  Hash Join  (cost=2430.93..69440.23 rows=3636 width=4) (actual time=2.879..128.746 rows=5859 loops=3)
+                                 Hash Cond: (store_sales_7.ss_hdemo_sk = household_demographics_7.hd_demo_sk)
+                                 ->  Parallel Hash Join  (cost=2183.53..69130.35 rows=23787 width=8) (actual time=2.032..125.906 rows=36083 loops=3)
+                                       Hash Cond: (store_sales_7.ss_sold_time_sk = time_dim_7.t_time_sk)
+                                       ->  Parallel Seq Scan on store_sales store_sales_7  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.038..74.967 rows=960135 loops=3)
+                                       ->  Parallel Hash  (cost=2170.35..2170.35 rows=1054 width=4) (actual time=1.916..1.916 rows=600 loops=3)
+                                             Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                             ->  Parallel Seq Scan on time_dim time_dim_7  (cost=0.00..2170.35 rows=1054 width=4) (actual time=1.079..1.845 rows=600 loops=3)
+                                                   Filter: ((t_minute < 30) AND (t_hour = 12))
+                                                   Rows Removed by Filter: 28200
+                                 ->  Hash  (cost=233.00..233.00 rows=1152 width=4) (actual time=0.572..0.572 rows=1200 loops=3)
+                                       Buckets: 2048  Batches: 1  Memory Usage: 59kB
+                                       ->  Seq Scan on household_demographics household_demographics_7  (cost=0.00..233.00 rows=1152 width=4) (actual time=0.015..0.512 rows=1200 loops=3)
+                                             Filter: (((hd_dep_count = 0) AND (hd_vehicle_count <= 2)) OR ((hd_dep_count = '-1'::integer) AND (hd_vehicle_count <= 1)) OR ((hd_dep_count = 3) AND (hd_vehicle_count <= 5)))
+                                             Rows Removed by Filter: 6000
+                           ->  Hash  (cost=1.15..1.15 rows=1 width=4) (actual time=0.024..0.024 rows=1 loops=3)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                 ->  Seq Scan on store store_7  (cost=0.00..1.15 rows=1 width=4) (actual time=0.020..0.021 rows=1 loops=3)
+                                       Filter: ((s_store_name)::text = 'ese'::text)
+                                       Rows Removed by Filter: 11
+ Planning Time: 2.628 ms
+ Execution Time: 1089.167 ms
+(225 rows)
+

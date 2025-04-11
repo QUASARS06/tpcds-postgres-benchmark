@@ -1,0 +1,60 @@
+                                                                                                            QUERY PLAN                                                                                                             
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=99481.91..99492.41 rows=100 width=136) (actual time=903.166..904.203 rows=100 loops=1)
+   ->  Subquery Scan on y  (cost=99481.91..99940.83 rows=4371 width=136) (actual time=903.166..904.198 rows=100 loops=1)
+         Filter: (y.web_cumulative > y.store_cumulative)
+         Rows Removed by Filter: 2907
+         ->  WindowAgg  (cost=99481.91..99776.93 rows=13112 width=136) (actual time=903.140..904.113 rows=3007 loops=1)
+               ->  Sort  (cost=99481.91..99514.69 rows=13112 width=72) (actual time=903.135..903.379 rows=3008 loops=1)
+                     Sort Key: (CASE WHEN (web_sales.ws_item_sk IS NOT NULL) THEN web_sales.ws_item_sk ELSE store_sales.ss_item_sk END), (CASE WHEN (date_dim.d_date IS NOT NULL) THEN date_dim.d_date ELSE date_dim_1.d_date END)
+                     Sort Method: external merge  Disk: 15120kB
+                     ->  Merge Full Join  (cost=96111.39..98585.14 rows=13112 width=72) (actual time=244.135..834.584 rows=608686 loops=1)
+                           Merge Cond: ((web_sales.ws_item_sk = store_sales.ss_item_sk) AND (date_dim.d_date = date_dim_1.d_date))
+                           ->  WindowAgg  (cost=25754.27..26247.42 rows=3427 width=40) (actual time=56.001..178.340 rows=143038 loops=1)
+                                 ->  Finalize GroupAggregate  (cost=25754.27..26187.45 rows=3427 width=40) (actual time=55.982..135.602 rows=143038 loops=1)
+                                       Group Key: web_sales.ws_item_sk, date_dim.d_date
+                                       ->  Gather Merge  (cost=25754.27..26116.05 rows=2856 width=40) (actual time=55.977..87.155 rows=145777 loops=1)
+                                             Workers Planned: 2
+                                             Workers Launched: 2
+                                             ->  Partial GroupAggregate  (cost=24754.24..24786.37 rows=1428 width=40) (actual time=54.305..69.987 rows=48592 loops=3)
+                                                   Group Key: web_sales.ws_item_sk, date_dim.d_date
+                                                   ->  Sort  (cost=24754.24..24757.81 rows=1428 width=14) (actual time=54.292..56.401 rows=49006 loops=3)
+                                                         Sort Key: web_sales.ws_item_sk, date_dim.d_date
+                                                         Sort Method: quicksort  Memory: 3439kB
+                                                         Worker 0:  Sort Method: quicksort  Memory: 3445kB
+                                                         Worker 1:  Sort Method: quicksort  Memory: 3468kB
+                                                         ->  Parallel Hash Join  (cost=2071.11..24679.42 rows=1428 width=14) (actual time=2.047..45.733 rows=49006 loops=3)
+                                                               Hash Cond: (web_sales.ws_sold_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=14) (actual time=0.034..28.694 rows=239795 loops=3)
+                                                                     Filter: (ws_item_sk IS NOT NULL)
+                                                               ->  Parallel Hash  (cost=2068.55..2068.55 rows=205 width=8) (actual time=1.978..1.979 rows=122 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                                     ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=205 width=8) (actual time=0.816..1.912 rows=122 loops=3)
+                                                                           Filter: ((d_month_seq >= 1212) AND (d_month_seq <= 1223))
+                                                                           Rows Removed by Filter: 24228
+                           ->  WindowAgg  (cost=70357.13..72243.79 rows=13112 width=40) (actual time=188.131..614.936 rows=492490 loops=1)
+                                 ->  Finalize GroupAggregate  (cost=70357.13..72014.33 rows=13112 width=40) (actual time=188.125..473.986 rows=492490 loops=1)
+                                       Group Key: store_sales.ss_item_sk, date_dim_1.d_date
+                                       ->  Gather Merge  (cost=70357.13..71741.17 rows=10926 width=40) (actual time=188.121..303.840 rows=527444 loops=1)
+                                             Workers Planned: 2
+                                             Workers Launched: 2
+                                             ->  Partial GroupAggregate  (cost=69357.10..69480.02 rows=5463 width=40) (actual time=186.129..248.818 rows=175815 loops=3)
+                                                   Group Key: store_sales.ss_item_sk, date_dim_1.d_date
+                                                   ->  Sort  (cost=69357.10..69370.76 rows=5463 width=14) (actual time=186.118..198.972 rows=182103 loops=3)
+                                                         Sort Key: store_sales.ss_item_sk, date_dim_1.d_date
+                                                         Sort Method: external merge  Disk: 4456kB
+                                                         Worker 0:  Sort Method: external merge  Disk: 4400kB
+                                                         Worker 1:  Sort Method: external merge  Disk: 4384kB
+                                                         ->  Parallel Hash Join  (cost=2071.11..69017.97 rows=5463 width=14) (actual time=1.797..145.009 rows=182103 loops=3)
+                                                               Hash Cond: (store_sales.ss_sold_date_sk = date_dim_1.d_date_sk)
+                                                               ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=14) (actual time=0.037..88.170 rows=960135 loops=3)
+                                                                     Filter: (ss_item_sk IS NOT NULL)
+                                                               ->  Parallel Hash  (cost=2068.55..2068.55 rows=205 width=8) (actual time=1.692..1.692 rows=122 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 40kB
+                                                                     ->  Parallel Seq Scan on date_dim date_dim_1  (cost=0.00..2068.55 rows=205 width=8) (actual time=1.257..1.667 rows=122 loops=3)
+                                                                           Filter: ((d_month_seq >= 1212) AND (d_month_seq <= 1223))
+                                                                           Rows Removed by Filter: 24228
+ Planning Time: 0.884 ms
+ Execution Time: 908.058 ms
+(56 rows)
+

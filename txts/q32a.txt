@@ -1,0 +1,44 @@
+                                                                                QUERY PLAN                                                                                 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=49787.15..49787.16 rows=1 width=32) (actual time=80.616..81.971 rows=1 loops=1)
+   ->  Aggregate  (cost=49787.15..49787.16 rows=1 width=32) (actual time=80.615..81.970 rows=1 loops=1)
+         ->  Hash Join  (cost=4578.40..49787.15 rows=1 width=6) (actual time=51.982..81.965 rows=5 loops=1)
+               Hash Cond: (catalog_sales.cs_item_sk = item.i_item_sk)
+               Join Filter: (catalog_sales.cs_ext_discount_amt > (SubPlan 1))
+               Rows Removed by Join Filter: 12
+               ->  Gather  (cost=3069.20..48273.41 rows=1728 width=10) (actual time=45.102..72.630 rows=41506 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     ->  Parallel Hash Join  (cost=2069.20..47100.61 rows=720 width=10) (actual time=41.789..70.312 rows=13835 loops=3)
+                           Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                           ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=600659 width=14) (actual time=0.022..45.031 rows=480516 loops=3)
+                           ->  Parallel Hash  (cost=2068.55..2068.55 rows=52 width=4) (actual time=1.844..1.845 rows=30 loops=3)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                 ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=52 width=4) (actual time=1.128..1.819 rows=30 loops=3)
+                                       Filter: ((d_date >= '2001-03-09'::date) AND (d_date <= '2001-06-07'::date))
+                                       Rows Removed by Filter: 24319
+               ->  Hash  (cost=1509.00..1509.00 rows=16 width=4) (actual time=5.397..5.397 rows=9 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     ->  Seq Scan on item  (cost=0.00..1509.00 rows=16 width=4) (actual time=0.190..5.393 rows=9 loops=1)
+                           Filter: (i_manufact_id = 722)
+                           Rows Removed by Filter: 17991
+               SubPlan 1
+                 ->  Aggregate  (cost=1004.63..1004.64 rows=1 width=32) (actual time=0.125..0.125 rows=1 loops=17)
+                       ->  Nested Loop  (cost=5.42..1004.62 rows=1 width=6) (actual time=0.072..0.124 rows=5 loops=17)
+                             ->  Bitmap Heap Scan on catalog_sales catalog_sales_1  (cost=5.12..349.21 rows=89 width=10) (actual time=0.012..0.088 rows=93 loops=17)
+                                   Recheck Cond: (cs_item_sk = item.i_item_sk)
+                                   Heap Blocks: exact=1586
+                                   ->  Bitmap Index Scan on catalog_sales_pkey  (cost=0.00..5.09 rows=89 width=0) (actual time=0.007..0.007 rows=93 loops=17)
+                                         Index Cond: (cs_item_sk = item.i_item_sk)
+                             ->  Memoize  (cost=0.30..7.52 rows=1 width=4) (actual time=0.000..0.000 rows=0 loops=1589)
+                                   Cache Key: catalog_sales_1.cs_sold_date_sk
+                                   Cache Mode: logical
+                                   Hits: 1246  Misses: 343  Evictions: 0  Overflows: 0  Memory Usage: 24kB
+                                   ->  Index Scan using date_dim_pkey on date_dim date_dim_1  (cost=0.29..7.51 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=343)
+                                         Index Cond: (d_date_sk = catalog_sales_1.cs_sold_date_sk)
+                                         Filter: ((d_date >= '2001-03-09'::date) AND (d_date <= '2001-06-07'::date))
+                                         Rows Removed by Filter: 1
+ Planning Time: 0.758 ms
+ Execution Time: 82.038 ms
+(40 rows)
+

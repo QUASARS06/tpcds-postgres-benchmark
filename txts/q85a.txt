@@ -1,0 +1,60 @@
+                                                                                                                                                                                                                                                                                                                                                        QUERY PLAN                                                                                                                                                                                                                                                                                                                                                         
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=24129.98..24129.98 rows=1 width=229) (actual time=295.048..296.674 rows=2 loops=1)
+   ->  Sort  (cost=24129.98..24129.98 rows=1 width=229) (actual time=295.048..296.673 rows=2 loops=1)
+         Sort Key: (substr((reason.r_reason_desc)::text, 1, 20)), (avg(web_sales.ws_quantity)), (avg(web_returns.wr_refunded_cash)), (avg(web_returns.wr_fee))
+         Sort Method: quicksort  Memory: 25kB
+         ->  Finalize GroupAggregate  (cost=24129.79..24129.97 rows=1 width=229) (actual time=295.032..296.659 rows=2 loops=1)
+               Group Key: reason.r_reason_desc
+               ->  Gather Merge  (cost=24129.79..24129.93 rows=1 width=197) (actual time=295.021..296.648 rows=2 loops=1)
+                     Workers Planned: 1
+                     Workers Launched: 1
+                     ->  Partial GroupAggregate  (cost=23129.78..23129.81 rows=1 width=197) (actual time=292.711..292.715 rows=1 loops=2)
+                           Group Key: reason.r_reason_desc
+                           ->  Sort  (cost=23129.78..23129.78 rows=1 width=117) (actual time=292.705..292.709 rows=1 loops=2)
+                                 Sort Key: reason.r_reason_desc
+                                 Sort Method: quicksort  Memory: 25kB
+                                 Worker 0:  Sort Method: quicksort  Memory: 25kB
+                                 ->  Nested Loop  (cost=1945.97..23129.77 rows=1 width=117) (actual time=207.088..292.693 rows=1 loops=2)
+                                       ->  Nested Loop  (cost=1945.67..23129.27 rows=1 width=121) (actual time=118.037..292.603 rows=10 loops=2)
+                                             Join Filter: ((cd1.cd_marital_status = cd2.cd_marital_status) AND (cd1.cd_education_status = cd2.cd_education_status) AND (((cd1.cd_marital_status = 'D'::bpchar) AND (cd1.cd_education_status = 'Primary'::bpchar) AND (web_sales.ws_sales_price >= 100.00) AND (web_sales.ws_sales_price <= 150.00)) OR ((cd1.cd_marital_status = 'S'::bpchar) AND (cd1.cd_education_status = 'College'::bpchar) AND (web_sales.ws_sales_price >= 50.00) AND (web_sales.ws_sales_price <= 100.00)) OR ((cd1.cd_marital_status = 'U'::bpchar) AND (cd1.cd_education_status = 'Advanced Degree'::bpchar) AND (web_sales.ws_sales_price >= 150.00) AND (web_sales.ws_sales_price <= 200.00))))
+                                             Rows Removed by Join Filter: 10
+                                             ->  Nested Loop  (cost=1945.25..23127.26 rows=1 width=154) (actual time=18.356..292.045 rows=242 loops=2)
+                                                   ->  Nested Loop  (cost=1944.82..23125.30 rows=1 width=135) (actual time=17.957..210.582 rows=246 loops=2)
+                                                         ->  Nested Loop  (cost=1944.68..23125.14 rows=1 width=139) (actual time=17.932..210.362 rows=246 loops=2)
+                                                               Join Filter: (((customer_address.ca_state = ANY ('{NC,TX,IA}'::bpchar[])) AND (web_sales.ws_net_profit >= '100'::numeric) AND (web_sales.ws_net_profit <= '200'::numeric)) OR ((customer_address.ca_state = ANY ('{WI,WV,GA}'::bpchar[])) AND (web_sales.ws_net_profit >= '150'::numeric) AND (web_sales.ws_net_profit <= '300'::numeric)) OR ((customer_address.ca_state = ANY ('{OK,VA,KY}'::bpchar[])) AND (web_sales.ws_net_profit >= '50'::numeric) AND (web_sales.ws_net_profit <= '250'::numeric)))
+                                                               Rows Removed by Join Filter: 166
+                                                               ->  Hash Join  (cost=1944.25..3871.91 rows=11321 width=132) (actual time=7.474..19.868 rows=11030 loops=2)
+                                                                     Hash Cond: (web_returns.wr_reason_sk = reason.r_reason_sk)
+                                                                     ->  Parallel Hash Join  (cost=1942.47..3835.43 rows=11849 width=35) (actual time=7.322..18.346 rows=11300 loops=2)
+                                                                           Hash Cond: (web_returns.wr_refunded_addr_sk = customer_address.ca_address_sk)
+                                                                           ->  Parallel Seq Scan on web_returns  (cost=0.00..1782.14 rows=42214 width=36) (actual time=0.004..3.048 rows=35882 loops=2)
+                                                                           ->  Parallel Hash  (cost=1834.53..1834.53 rows=8635 width=7) (actual time=7.276..7.276 rows=8290 loops=2)
+                                                                                 Buckets: 16384  Batches: 1  Memory Usage: 800kB
+                                                                                 ->  Parallel Seq Scan on customer_address  (cost=0.00..1834.53 rows=8635 width=7) (actual time=0.008..6.411 rows=8290 loops=2)
+                                                                                       Filter: (((ca_country)::text = 'United States'::text) AND ((ca_state = ANY ('{NC,TX,IA}'::bpchar[])) OR (ca_state = ANY ('{WI,WV,GA}'::bpchar[])) OR (ca_state = ANY ('{OK,VA,KY}'::bpchar[]))))
+                                                                                       Rows Removed by Filter: 16710
+                                                                     ->  Hash  (cost=1.35..1.35 rows=35 width=105) (actual time=0.139..0.139 rows=35 loops=2)
+                                                                           Buckets: 1024  Batches: 1  Memory Usage: 13kB
+                                                                           ->  Seq Scan on reason  (cost=0.00..1.35 rows=35 width=105) (actual time=0.126..0.128 rows=35 loops=2)
+                                                               ->  Index Scan using web_sales_pkey on web_sales  (cost=0.42..1.66 rows=1 width=32) (actual time=0.017..0.017 rows=0 loops=22061)
+                                                                     Index Cond: ((ws_item_sk = web_returns.wr_item_sk) AND (ws_order_number = web_returns.wr_order_number))
+                                                                     Filter: ((((ws_sales_price >= 100.00) AND (ws_sales_price <= 150.00)) OR ((ws_sales_price >= 50.00) AND (ws_sales_price <= 100.00)) OR ((ws_sales_price >= 150.00) AND (ws_sales_price <= 200.00))) AND (((ws_net_profit >= '100'::numeric) AND (ws_net_profit <= '200'::numeric)) OR ((ws_net_profit >= '150'::numeric) AND (ws_net_profit <= '300'::numeric)) OR ((ws_net_profit >= '50'::numeric) AND (ws_net_profit <= '250'::numeric))))
+                                                                     Rows Removed by Filter: 1
+                                                         ->  Index Only Scan using web_page_pkey on web_page  (cost=0.14..0.16 rows=1 width=4) (actual time=0.001..0.001 rows=1 loops=492)
+                                                               Index Cond: (wp_web_page_sk = web_sales.ws_web_page_sk)
+                                                               Heap Fetches: 0
+                                                   ->  Index Scan using customer_demographics_pkey on customer_demographics cd2  (cost=0.43..1.96 rows=1 width=27) (actual time=0.331..0.331 rows=1 loops=492)
+                                                         Index Cond: (cd_demo_sk = web_returns.wr_returning_cdemo_sk)
+                                             ->  Index Scan using customer_demographics_pkey on customer_demographics cd1  (cost=0.43..1.97 rows=1 width=27) (actual time=0.002..0.002 rows=0 loops=484)
+                                                   Index Cond: (cd_demo_sk = web_returns.wr_refunded_cdemo_sk)
+                                                   Filter: (((cd_marital_status = 'D'::bpchar) AND (cd_education_status = 'Primary'::bpchar)) OR ((cd_marital_status = 'S'::bpchar) AND (cd_education_status = 'College'::bpchar)) OR ((cd_marital_status = 'U'::bpchar) AND (cd_education_status = 'Advanced Degree'::bpchar)))
+                                                   Rows Removed by Filter: 1
+                                       ->  Index Scan using date_dim_pkey on date_dim  (cost=0.29..0.50 rows=1 width=4) (actual time=0.009..0.009 rows=0 loops=19)
+                                             Index Cond: (d_date_sk = web_sales.ws_sold_date_sk)
+                                             Filter: (d_year = 1998)
+                                             Rows Removed by Filter: 1
+ Planning Time: 5.179 ms
+ Execution Time: 296.778 ms
+(56 rows)
+

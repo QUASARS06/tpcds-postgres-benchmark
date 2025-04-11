@@ -1,0 +1,57 @@
+                                                                                  QUERY PLAN                                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=189837.89..189837.92 rows=13 width=228) (actual time=909.956..910.196 rows=2513 loops=1)
+   Sort Key: wswscs.d_week_seq
+   Sort Method: quicksort  Memory: 275kB
+   CTE wswscs
+     ->  Finalize GroupAggregate  (cost=181045.55..184545.10 rows=10420 width=228) (actual time=896.761..898.261 rows=263 loops=1)
+           Group Key: date_dim_2.d_week_seq
+           ->  Gather Merge  (cost=181045.55..183477.05 rows=20840 width=228) (actual time=896.746..897.043 rows=787 loops=1)
+                 Workers Planned: 2
+                 Workers Launched: 2
+                 ->  Sort  (cost=180045.53..180071.58 rows=10420 width=228) (actual time=893.198..893.210 rows=262 loops=3)
+                       Sort Key: date_dim_2.d_week_seq
+                       Sort Method: quicksort  Memory: 153kB
+                       Worker 0:  Sort Method: quicksort  Memory: 154kB
+                       Worker 1:  Sort Method: quicksort  Memory: 153kB
+                       ->  Partial HashAggregate  (cost=168512.01..179350.14 rows=10420 width=228) (actual time=892.926..893.131 rows=262 loops=3)
+                             Group Key: date_dim_2.d_week_seq
+                             Planned Partitions: 4  Batches: 1  Memory Usage: 977kB
+                             Worker 0:  Batches: 1  Memory Usage: 977kB
+                             Worker 1:  Batches: 1  Memory Usage: 977kB
+                             ->  Parallel Hash Join  (cost=2390.83..74532.55 rows=900402 width=20) (actual time=10.536..725.776 rows=717854 loops=3)
+                                   Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_2.d_date_sk)
+                                   ->  Parallel Append  (cost=0.00..69778.04 rows=900402 width=10) (actual time=0.279..641.055 rows=720311 loops=3)
+                                         ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=600659 width=10) (actual time=0.238..316.479 rows=1441548 loops=1)
+                                         ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=10) (actual time=0.275..506.094 rows=239795 loops=3)
+                                   ->  Parallel Hash  (cost=1853.70..1853.70 rows=42970 width=18) (actual time=10.146..10.147 rows=24350 loops=3)
+                                         Buckets: 131072  Batches: 1  Memory Usage: 5088kB
+                                         ->  Parallel Seq Scan on date_dim date_dim_2  (cost=0.00..1853.70 rows=42970 width=18) (actual time=0.008..5.926 rows=24350 loops=3)
+   ->  Hash Join  (cost=5044.49..5292.55 rows=13 width=228) (actual time=907.649..909.668 rows=2513 loops=1)
+         Hash Cond: (wswscs.d_week_seq = date_dim.d_week_seq)
+         ->  CTE Scan on wswscs  (cost=0.00..208.40 rows=10420 width=228) (actual time=896.763..896.772 rows=263 loops=1)
+         ->  Hash  (cost=5044.32..5044.32 rows=13 width=232) (actual time=10.860..10.861 rows=2513 loops=1)
+               Buckets: 4096 (originally 1024)  Batches: 1 (originally 1)  Memory Usage: 288kB
+               ->  Merge Join  (cost=5038.76..5044.32 rows=13 width=232) (actual time=10.359..10.571 rows=2513 loops=1)
+                     Merge Cond: (((wswscs_1.d_week_seq - 53)) = date_dim.d_week_seq)
+                     ->  Sort  (cost=2686.27..2687.17 rows=362 width=228) (actual time=6.118..6.129 rows=365 loops=1)
+                           Sort Key: ((wswscs_1.d_week_seq - 53))
+                           Sort Method: quicksort  Memory: 59kB
+                           ->  Hash Join  (cost=2341.64..2670.88 rows=362 width=228) (actual time=4.933..6.062 rows=365 loops=1)
+                                 Hash Cond: (wswscs_1.d_week_seq = date_dim_1.d_week_seq)
+                                 ->  CTE Scan on wswscs wswscs_1  (cost=0.00..208.40 rows=10420 width=228) (actual time=0.000..1.374 rows=263 loops=1)
+                                 ->  Hash  (cost=2337.11..2337.11 rows=362 width=4) (actual time=4.615..4.615 rows=365 loops=1)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 21kB
+                                       ->  Seq Scan on date_dim date_dim_1  (cost=0.00..2337.11 rows=362 width=4) (actual time=2.199..4.588 rows=365 loops=1)
+                                             Filter: (d_year = 1999)
+                                             Rows Removed by Filter: 72684
+                     ->  Sort  (cost=2352.50..2353.40 rows=362 width=4) (actual time=4.231..4.279 rows=2514 loops=1)
+                           Sort Key: date_dim.d_week_seq
+                           Sort Method: quicksort  Memory: 25kB
+                           ->  Seq Scan on date_dim  (cost=0.00..2337.11 rows=362 width=4) (actual time=2.195..4.214 rows=365 loops=1)
+                                 Filter: (d_year = 1998)
+                                 Rows Removed by Filter: 72684
+ Planning Time: 1.415 ms
+ Execution Time: 910.723 ms
+(53 rows)
+

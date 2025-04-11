@@ -1,0 +1,32 @@
+                                                                                      QUERY PLAN                                                                                      
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=5725.72..5731.91 rows=2 width=125) (actual time=29.220..29.945 rows=2 loops=1)
+   ->  Group  (cost=5725.72..5731.91 rows=2 width=125) (actual time=29.220..29.941 rows=2 loops=1)
+         Group Key: item.i_item_id, item.i_item_desc, item.i_current_price
+         ->  Nested Loop  (cost=5725.72..5730.60 rows=174 width=125) (actual time=29.219..29.649 rows=4244 loops=1)
+               ->  Gather Merge  (cost=5725.29..5725.41 rows=1 width=133) (actual time=28.970..28.999 rows=31 loops=1)
+                     Workers Planned: 1
+                     Workers Launched: 1
+                     ->  Sort  (cost=4725.28..4725.28 rows=1 width=133) (actual time=23.688..23.689 rows=16 loops=2)
+                           Sort Key: item.i_item_id, item.i_item_desc, item.i_current_price
+                           Sort Method: quicksort  Memory: 28kB
+                           Worker 0:  Sort Method: quicksort  Memory: 25kB
+                           ->  Nested Loop  (cost=0.43..4725.27 rows=1 width=133) (actual time=12.420..23.657 rows=16 loops=2)
+                                 ->  Parallel Seq Scan on item  (cost=0.00..1495.76 rows=1 width=129) (actual time=0.922..2.468 rows=2 loops=2)
+                                       Filter: ((i_current_price >= '58'::numeric) AND (i_current_price <= '88'::numeric) AND (i_manufact_id = ANY ('{259,559,580,485}'::integer[])))
+                                       Rows Removed by Filter: 8998
+                                 ->  Nested Loop  (cost=0.43..3228.91 rows=59 width=4) (actual time=5.691..10.591 rows=8 loops=4)
+                                       ->  Seq Scan on date_dim  (cost=0.00..2519.73 rows=59 width=4) (actual time=2.124..4.482 rows=61 loops=4)
+                                             Filter: ((d_date >= '2001-01-13'::date) AND (d_date <= '2001-03-14'::date))
+                                             Rows Removed by Filter: 72988
+                                       ->  Index Scan using inventory_pkey on inventory  (cost=0.43..12.01 rows=1 width=8) (actual time=0.071..0.100 rows=0 loops=244)
+                                             Index Cond: ((inv_date_sk = date_dim.d_date_sk) AND (inv_item_sk = item.i_item_sk))
+                                             Filter: ((inv_quantity_on_hand >= 100) AND (inv_quantity_on_hand <= 500))
+                                             Rows Removed by Filter: 0
+               ->  Index Only Scan using store_sales_pkey on store_sales  (cost=0.43..3.47 rows=173 width=4) (actual time=0.010..0.015 rows=137 loops=31)
+                     Index Cond: (ss_item_sk = inventory.inv_item_sk)
+                     Heap Fetches: 0
+ Planning Time: 3.161 ms
+ Execution Time: 29.992 ms
+(28 rows)
+

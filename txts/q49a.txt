@@ -1,0 +1,113 @@
+                                                                                                            QUERY PLAN                                                                                                             
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=30218.74..30218.75 rows=3 width=84) (actual time=186.037..186.725 rows=34 loops=1)
+   ->  Sort  (cost=30218.74..30218.75 rows=3 width=84) (actual time=186.034..186.720 rows=34 loops=1)
+         Sort Key: ('web'::text), web.return_rank, web.currency_rank, web.item
+         Sort Method: quicksort  Memory: 27kB
+         ->  HashAggregate  (cost=30218.69..30218.72 rows=3 width=84) (actual time=186.009..186.698 rows=34 loops=1)
+               Group Key: ('web'::text), web.item, web.return_ratio, web.return_rank, web.currency_rank
+               Batches: 1  Memory Usage: 32kB
+               ->  Append  (cost=5962.89..30218.65 rows=3 width=84) (actual time=57.373..186.675 rows=34 loops=1)
+                     ->  Subquery Scan on web  (cost=5962.89..5962.93 rows=1 width=84) (actual time=57.373..57.398 rows=11 loops=1)
+                           Filter: ((web.return_rank <= 10) OR (web.currency_rank <= 10))
+                           Rows Removed by Filter: 8
+                           ->  WindowAgg  (cost=5962.89..5962.91 rows=1 width=84) (actual time=57.372..57.396 rows=19 loops=1)
+                                 ->  Sort  (cost=5962.89..5962.90 rows=1 width=76) (actual time=57.371..57.390 rows=19 loops=1)
+                                       Sort Key: in_web.return_ratio
+                                       Sort Method: quicksort  Memory: 26kB
+                                       ->  WindowAgg  (cost=5962.86..5962.88 rows=1 width=76) (actual time=57.354..57.382 rows=19 loops=1)
+                                             ->  Sort  (cost=5962.86..5962.87 rows=1 width=68) (actual time=57.350..57.369 rows=19 loops=1)
+                                                   Sort Key: in_web.currency_ratio
+                                                   Sort Method: quicksort  Memory: 25kB
+                                                   ->  Subquery Scan on in_web  (cost=5962.80..5962.85 rows=1 width=68) (actual time=57.328..57.361 rows=19 loops=1)
+                                                         ->  GroupAggregate  (cost=5962.80..5962.85 rows=1 width=68) (actual time=57.325..57.357 rows=19 loops=1)
+                                                               Group Key: ws.ws_item_sk
+                                                               ->  Sort  (cost=5962.80..5962.80 rows=1 width=24) (actual time=57.310..57.329 rows=19 loops=1)
+                                                                     Sort Key: ws.ws_item_sk
+                                                                     Sort Method: quicksort  Memory: 26kB
+                                                                     ->  Nested Loop  (cost=1000.72..5962.79 rows=1 width=24) (actual time=15.306..57.316 rows=19 loops=1)
+                                                                           ->  Gather  (cost=1000.42..5962.45 rows=1 width=28) (actual time=0.824..56.137 rows=571 loops=1)
+                                                                                 Workers Planned: 1
+                                                                                 Workers Launched: 1
+                                                                                 ->  Nested Loop  (cost=0.42..4962.35 rows=1 width=28) (actual time=1.083..55.501 rows=286 loops=2)
+                                                                                       ->  Parallel Seq Scan on web_returns wr  (cost=0.00..1887.67 rows=388 width=18) (actual time=0.587..7.851 rows=316 loops=2)
+                                                                                             Filter: (wr_return_amt > '10000'::numeric)
+                                                                                             Rows Removed by Filter: 35566
+                                                                                       ->  Index Scan using web_sales_pkey on web_sales ws  (cost=0.42..7.92 rows=1 width=22) (actual time=0.150..0.150 rows=1 loops=632)
+                                                                                             Index Cond: ((ws_item_sk = wr.wr_item_sk) AND (ws_order_number = wr.wr_order_number))
+                                                                                             Filter: ((ws_net_profit > '1'::numeric) AND (ws_net_paid > '0'::numeric) AND (ws_quantity > 0))
+                                                                                             Rows Removed by Filter: 0
+                                                                           ->  Index Scan using date_dim_pkey on date_dim  (cost=0.29..0.34 rows=1 width=4) (actual time=0.002..0.002 rows=0 loops=571)
+                                                                                 Index Cond: (d_date_sk = ws.ws_sold_date_sk)
+                                                                                 Filter: ((d_year = 1998) AND (d_moy = 11))
+                                                                                 Rows Removed by Filter: 1
+                     ->  Subquery Scan on catalog  (cost=11253.25..11253.29 rows=1 width=84) (actual time=47.225..47.250 rows=10 loops=1)
+                           Filter: ((catalog.return_rank <= 10) OR (catalog.currency_rank <= 10))
+                           Rows Removed by Filter: 40
+                           ->  WindowAgg  (cost=11253.25..11253.27 rows=1 width=84) (actual time=47.224..47.247 rows=50 loops=1)
+                                 ->  Sort  (cost=11253.25..11253.26 rows=1 width=76) (actual time=47.223..47.234 rows=50 loops=1)
+                                       Sort Key: in_cat.return_ratio
+                                       Sort Method: quicksort  Memory: 28kB
+                                       ->  WindowAgg  (cost=11253.22..11253.24 rows=1 width=76) (actual time=47.193..47.217 rows=50 loops=1)
+                                             ->  Sort  (cost=11253.22..11253.23 rows=1 width=68) (actual time=47.187..47.198 rows=50 loops=1)
+                                                   Sort Key: in_cat.currency_ratio
+                                                   Sort Method: quicksort  Memory: 27kB
+                                                   ->  Subquery Scan on in_cat  (cost=11253.16..11253.21 rows=1 width=68) (actual time=47.139..47.185 rows=50 loops=1)
+                                                         ->  GroupAggregate  (cost=11253.16..11253.21 rows=1 width=68) (actual time=47.138..47.182 rows=50 loops=1)
+                                                               Group Key: cs.cs_item_sk
+                                                               ->  Sort  (cost=11253.16..11253.16 rows=1 width=24) (actual time=47.130..47.140 rows=51 loops=1)
+                                                                     Sort Key: cs.cs_item_sk
+                                                                     Sort Method: quicksort  Memory: 27kB
+                                                                     ->  Nested Loop  (cost=1000.72..11253.15 rows=1 width=24) (actual time=6.133..47.122 rows=51 loops=1)
+                                                                           ->  Gather  (cost=1000.43..11252.82 rows=1 width=28) (actual time=0.676..46.221 rows=1083 loops=1)
+                                                                                 Workers Planned: 1
+                                                                                 Workers Launched: 1
+                                                                                 ->  Nested Loop  (cost=0.43..10252.72 rows=1 width=28) (actual time=0.396..45.375 rows=542 loops=2)
+                                                                                       ->  Parallel Seq Scan on catalog_returns cr  (cost=0.00..3955.32 rows=791 width=18) (actual time=0.334..40.629 rows=608 loops=2)
+                                                                                             Filter: (cr_return_amount > '10000'::numeric)
+                                                                                             Rows Removed by Filter: 71425
+                                                                                       ->  Index Scan using catalog_sales_pkey on catalog_sales cs  (cost=0.43..7.96 rows=1 width=22) (actual time=0.008..0.008 rows=1 loops=1217)
+                                                                                             Index Cond: ((cs_item_sk = cr.cr_item_sk) AND (cs_order_number = cr.cr_order_number))
+                                                                                             Filter: ((cs_net_profit > '1'::numeric) AND (cs_net_paid > '0'::numeric) AND (cs_quantity > 0))
+                                                                                             Rows Removed by Filter: 0
+                                                                           ->  Index Scan using date_dim_pkey on date_dim date_dim_1  (cost=0.29..0.33 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=1083)
+                                                                                 Index Cond: (d_date_sk = cs.cs_sold_date_sk)
+                                                                                 Filter: ((d_year = 1998) AND (d_moy = 11))
+                                                                                 Rows Removed by Filter: 1
+                     ->  Subquery Scan on store  (cost=13002.39..13002.43 rows=1 width=84) (actual time=81.361..82.023 rows=13 loops=1)
+                           Filter: ((store.return_rank <= 10) OR (store.currency_rank <= 10))
+                           Rows Removed by Filter: 6
+                           ->  WindowAgg  (cost=13002.39..13002.41 rows=1 width=84) (actual time=81.359..82.021 rows=19 loops=1)
+                                 ->  Sort  (cost=13002.39..13002.40 rows=1 width=76) (actual time=81.358..82.014 rows=19 loops=1)
+                                       Sort Key: in_store.return_ratio
+                                       Sort Method: quicksort  Memory: 26kB
+                                       ->  WindowAgg  (cost=13002.36..13002.38 rows=1 width=76) (actual time=81.337..81.999 rows=19 loops=1)
+                                             ->  Sort  (cost=13002.36..13002.37 rows=1 width=68) (actual time=81.317..81.974 rows=19 loops=1)
+                                                   Sort Key: in_store.currency_ratio
+                                                   Sort Method: quicksort  Memory: 25kB
+                                                   ->  Subquery Scan on in_store  (cost=13002.30..13002.35 rows=1 width=68) (actual time=81.295..81.966 rows=19 loops=1)
+                                                         ->  GroupAggregate  (cost=13002.30..13002.35 rows=1 width=68) (actual time=81.294..81.964 rows=19 loops=1)
+                                                               Group Key: sts.ss_item_sk
+                                                               ->  Sort  (cost=13002.30..13002.30 rows=1 width=24) (actual time=81.286..81.942 rows=19 loops=1)
+                                                                     Sort Key: sts.ss_item_sk
+                                                                     Sort Method: quicksort  Memory: 26kB
+                                                                     ->  Nested Loop  (cost=1000.72..13002.29 rows=1 width=24) (actual time=5.610..81.929 rows=19 loops=1)
+                                                                           ->  Gather  (cost=1000.43..13001.96 rows=1 width=28) (actual time=1.557..81.352 rows=391 loops=1)
+                                                                                 Workers Planned: 2
+                                                                                 Workers Launched: 2
+                                                                                 ->  Nested Loop  (cost=0.43..12001.86 rows=1 width=28) (actual time=0.687..79.154 rows=130 loops=3)
+                                                                                       ->  Parallel Seq Scan on store_returns sr  (cost=0.00..6321.47 rows=700 width=18) (actual time=0.629..77.101 rows=169 loops=3)
+                                                                                             Filter: (sr_return_amt > '10000'::numeric)
+                                                                                             Rows Removed by Filter: 95669
+                                                                                       ->  Index Scan using store_sales_pkey on store_sales sts  (cost=0.43..8.11 rows=1 width=22) (actual time=0.012..0.012 rows=1 loops=507)
+                                                                                             Index Cond: ((ss_item_sk = sr.sr_item_sk) AND (ss_ticket_number = sr.sr_ticket_number))
+                                                                                             Filter: ((ss_net_profit > '1'::numeric) AND (ss_net_paid > '0'::numeric) AND (ss_quantity > 0))
+                                                                                             Rows Removed by Filter: 0
+                                                                           ->  Index Scan using date_dim_pkey on date_dim date_dim_2  (cost=0.29..0.33 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=391)
+                                                                                 Index Cond: (d_date_sk = sts.ss_sold_date_sk)
+                                                                                 Filter: ((d_year = 1998) AND (d_moy = 11))
+                                                                                 Rows Removed by Filter: 1
+ Planning Time: 3.581 ms
+ Execution Time: 186.858 ms
+(109 rows)
+

@@ -1,0 +1,47 @@
+                                                                                                        QUERY PLAN                                                                                                        
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=66916.92..66916.92 rows=1 width=72) (actual time=925.941..926.972 rows=1 loops=1)
+   ->  Sort  (cost=66916.92..66916.92 rows=1 width=72) (actual time=925.941..926.972 rows=1 loops=1)
+         Sort Key: (count(DISTINCT cs1.cs_order_number))
+         Sort Method: quicksort  Memory: 25kB
+         ->  Aggregate  (cost=66916.90..66916.91 rows=1 width=72) (actual time=925.924..926.955 rows=1 loops=1)
+               ->  Sort  (cost=66916.81..66916.83 rows=8 width=16) (actual time=925.891..926.926 rows=172 loops=1)
+                     Sort Key: cs1.cs_order_number
+                     Sort Method: quicksort  Memory: 32kB
+                     ->  Nested Loop  (cost=48107.57..66916.69 rows=8 width=16) (actual time=925.822..926.894 rows=172 loops=1)
+                           Join Filter: (call_center.cc_call_center_sk = cs1.cs_call_center_sk)
+                           Rows Removed by Join Filter: 345
+                           ->  Gather  (cost=48107.57..66914.93 rows=8 width=20) (actual time=925.525..926.561 rows=172 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Nested Loop Semi Join  (cost=47107.57..65914.13 rows=3 width=20) (actual time=135.789..398.139 rows=57 loops=3)
+                                       ->  Nested Loop  (cost=47107.15..51047.34 rows=3 width=24) (actual time=135.515..139.750 rows=57 loops=3)
+                                             ->  Parallel Hash Right Anti Join  (cost=47106.86..50994.98 rows=167 width=28) (actual time=135.435..136.020 rows=3297 loops=3)
+                                                   Hash Cond: (cr1.cr_order_number = cs1.cs_order_number)
+                                                   ->  Parallel Index Only Scan using catalog_returns_pkey on catalog_returns cr1  (cost=0.42..3661.03 rows=60028 width=4) (actual time=1.789..50.903 rows=48022 loops=3)
+                                                         Heap Fetches: 0
+                                                   ->  Parallel Hash  (cost=47100.40..47100.40 rows=483 width=28) (actual time=81.184..81.187 rows=9230 loops=3)
+                                                         Buckets: 32768 (originally 2048)  Batches: 1 (originally 1)  Memory Usage: 2288kB
+                                                         ->  Parallel Hash Join  (cost=2068.99..47100.40 rows=483 width=28) (actual time=62.000..79.052 rows=9230 loops=3)
+                                                               Hash Cond: (cs1.cs_ship_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Seq Scan on catalog_sales cs1  (cost=0.00..43454.59 rows=600659 width=32) (actual time=0.039..53.058 rows=480516 loops=3)
+                                                               ->  Parallel Hash  (cost=2068.55..2068.55 rows=35 width=4) (actual time=2.080..2.081 rows=20 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                                                     ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=35 width=4) (actual time=1.295..2.055 rows=20 loops=3)
+                                                                           Filter: ((d_date >= '2002-04-01'::date) AND (d_date <= '2002-05-31'::date))
+                                                                           Rows Removed by Filter: 24329
+                                             ->  Index Scan using customer_address_pkey on customer_address  (cost=0.29..0.31 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=9890)
+                                                   Index Cond: (ca_address_sk = cs1.cs_ship_addr_sk)
+                                                   Filter: (ca_state = 'PA'::bpchar)
+                                                   Rows Removed by Filter: 1
+                                       ->  Index Scan using catalog_sales_pkey on catalog_sales cs2  (cost=0.43..10812.56 rows=10 width=8) (actual time=4.506..4.506 rows=1 loops=172)
+                                             Index Cond: (cs_order_number = cs1.cs_order_number)
+                                             Filter: (cs1.cs_warehouse_sk <> cs_warehouse_sk)
+                                             Rows Removed by Filter: 0
+                           ->  Materialize  (cost=0.00..1.13 rows=6 width=4) (actual time=0.002..0.002 rows=3 loops=172)
+                                 ->  Seq Scan on call_center  (cost=0.00..1.10 rows=6 width=4) (actual time=0.278..0.279 rows=6 loops=1)
+                                       Filter: ((cc_county)::text = ANY ('{"Williamson County","Williamson County","Williamson County","Williamson County","Williamson County"}'::text[]))
+ Planning Time: 4.707 ms
+ Execution Time: 927.089 ms
+(43 rows)
+

@@ -1,0 +1,46 @@
+                                                                                                     QUERY PLAN                                                                                                     
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=7062.64..7062.65 rows=1 width=97) (actual time=46.943..46.978 rows=1 loops=1)
+   Sort Key: (sum(catalog_returns.cr_net_loss)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   ->  GroupAggregate  (cost=7062.60..7062.63 rows=1 width=97) (actual time=46.935..46.970 rows=1 loops=1)
+         Group Key: call_center.cc_call_center_id, call_center.cc_name, call_center.cc_manager, customer_demographics.cd_marital_status, customer_demographics.cd_education_status
+         ->  Sort  (cost=7062.60..7062.61 rows=1 width=71) (actual time=46.926..46.961 rows=1 loops=1)
+               Sort Key: call_center.cc_call_center_id, call_center.cc_name, call_center.cc_manager, customer_demographics.cd_marital_status, customer_demographics.cd_education_status
+               Sort Method: quicksort  Memory: 25kB
+               ->  Nested Loop  (cost=3070.20..7062.59 rows=1 width=71) (actual time=42.898..46.951 rows=1 loops=1)
+                     ->  Nested Loop  (cost=3069.77..7061.05 rows=1 width=52) (actual time=9.989..33.275 rows=43 loops=1)
+                           ->  Gather  (cost=3069.64..7060.90 rows=1 width=14) (actual time=9.923..33.157 rows=43 loops=1)
+                                 Workers Planned: 1
+                                 Workers Launched: 1
+                                 ->  Nested Loop  (cost=2069.64..6060.80 rows=1 width=14) (actual time=9.525..35.897 rows=22 loops=2)
+                                       ->  Nested Loop  (cost=2069.35..6058.99 rows=5 width=18) (actual time=8.390..19.654 rows=198 loops=2)
+                                             ->  Nested Loop  (cost=2069.07..6048.60 rows=34 width=22) (actual time=8.242..18.216 rows=1198 loops=2)
+                                                   ->  Parallel Hash Join  (cost=2068.78..6034.69 rows=35 width=14) (actual time=8.217..14.617 rows=1222 loops=2)
+                                                         Hash Cond: (catalog_returns.cr_returned_date_sk = date_dim.d_date_sk)
+                                                         ->  Parallel Seq Scan on catalog_returns  (cost=0.00..3743.45 rows=84745 width=18) (actual time=0.032..8.393 rows=72034 loops=2)
+                                                         ->  Parallel Hash  (cost=2068.55..2068.55 rows=18 width=4) (actual time=2.988..2.988 rows=16 loops=2)
+                                                               Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                                               ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=18 width=4) (actual time=1.451..2.956 rows=16 loops=2)
+                                                                     Filter: ((d_year = 2000) AND (d_moy = 12))
+                                                                     Rows Removed by Filter: 36509
+                                                   ->  Index Scan using customer_pkey on customer  (cost=0.29..0.40 rows=1 width=16) (actual time=0.003..0.003 rows=1 loops=2443)
+                                                         Index Cond: (c_customer_sk = catalog_returns.cr_returning_customer_sk)
+                                             ->  Index Scan using household_demographics_pkey on household_demographics  (cost=0.28..0.31 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=2397)
+                                                   Index Cond: (hd_demo_sk = customer.c_current_hdemo_sk)
+                                                   Filter: (hd_buy_potential ~~ 'Unknown%'::text)
+                                                   Rows Removed by Filter: 1
+                                       ->  Index Scan using customer_address_pkey on customer_address  (cost=0.29..0.36 rows=1 width=4) (actual time=0.082..0.082 rows=0 loops=397)
+                                             Index Cond: (ca_address_sk = customer.c_current_addr_sk)
+                                             Filter: (ca_gmt_offset = '-7'::numeric)
+                                             Rows Removed by Filter: 1
+                           ->  Index Scan using call_center_pkey on call_center  (cost=0.13..0.15 rows=1 width=46) (actual time=0.002..0.002 rows=1 loops=43)
+                                 Index Cond: (cc_call_center_sk = catalog_returns.cr_call_center_sk)
+                     ->  Index Scan using customer_demographics_pkey on customer_demographics  (cost=0.43..1.54 rows=1 width=27) (actual time=0.318..0.318 rows=0 loops=43)
+                           Index Cond: (cd_demo_sk = customer.c_current_cdemo_sk)
+                           Filter: (((cd_marital_status = 'M'::bpchar) AND (cd_education_status = 'Unknown'::bpchar)) OR ((cd_marital_status = 'W'::bpchar) AND (cd_education_status = 'Advanced Degree'::bpchar)))
+                           Rows Removed by Filter: 1
+ Planning Time: 3.334 ms
+ Execution Time: 47.037 ms
+(42 rows)
+

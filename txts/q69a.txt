@@ -1,0 +1,67 @@
+                                                                                                                    QUERY PLAN                                                                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=81166.14..104317.87 rows=100 width=64) (actual time=431.134..743.357 rows=100 loops=1)
+   ->  GroupAggregate  (cost=81166.14..163354.78 rows=355 width=64) (actual time=431.133..743.348 rows=100 loops=1)
+         Group Key: customer_demographics.cd_gender, customer_demographics.cd_marital_status, customer_demographics.cd_education_status, customer_demographics.cd_purchase_estimate, customer_demographics.cd_credit_rating
+         ->  Nested Loop Anti Join  (cost=81166.14..163345.91 rows=355 width=40) (actual time=428.274..743.238 rows=109 loops=1)
+               Join Filter: (c.c_customer_sk = catalog_sales.cs_ship_customer_sk)
+               Rows Removed by Join Filter: 4529178
+               ->  Nested Loop Anti Join  (cost=77989.52..105498.80 rows=361 width=44) (actual time=351.509..463.035 rows=116 loops=1)
+                     Join Filter: (c.c_customer_sk = web_sales.ws_bill_customer_sk)
+                     Rows Removed by Join Filter: 2453297
+                     ->  Gather Merge  (cost=74812.89..74854.26 rows=363 width=44) (actual time=309.804..310.046 rows=119 loops=1)
+                           Workers Planned: 1
+                           Workers Launched: 1
+                           ->  Sort  (cost=73812.88..73813.42 rows=214 width=44) (actual time=308.612..308.627 rows=223 loops=2)
+                                 Sort Key: customer_demographics.cd_gender, customer_demographics.cd_marital_status, customer_demographics.cd_education_status, customer_demographics.cd_purchase_estimate, customer_demographics.cd_credit_rating
+                                 Sort Method: quicksort  Memory: 52kB
+                                 Worker 0:  Sort Method: quicksort  Memory: 51kB
+                                 ->  Nested Loop  (cost=69141.67..73804.60 rows=214 width=44) (actual time=169.853..308.097 rows=386 loops=2)
+                                       ->  Nested Loop  (cost=69141.24..73466.48 rows=221 width=8) (actual time=168.570..188.500 rows=402 loops=2)
+                                             ->  Parallel Hash Semi Join  (cost=69140.95..72783.64 rows=1885 width=12) (actual time=168.500..182.056 rows=3524 loops=2)
+                                                   Hash Cond: (c.c_customer_sk = store_sales.ss_customer_sk)
+                                                   ->  Parallel Seq Scan on customer c  (cost=0.00..3460.24 rows=58824 width=12) (actual time=0.013..5.645 rows=50000 loops=2)
+                                                   ->  Parallel Hash  (cost=69123.49..69123.49 rows=1397 width=4) (actual time=168.444..168.447 rows=41784 loops=2)
+                                                         Buckets: 131072 (originally 4096)  Batches: 1 (originally 1)  Memory Usage: 5248kB
+                                                         ->  Parallel Hash Join  (cost=2176.62..69123.49 rows=1397 width=4) (actual time=3.329..160.712 rows=41784 loops=2)
+                                                               Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=8) (actual time=0.051..93.197 rows=1440202 loops=2)
+                                                               ->  Parallel Hash  (cost=2175.97..2175.97 rows=52 width=4) (actual time=3.213..3.214 rows=45 loops=2)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                                                     ->  Parallel Seq Scan on date_dim  (cost=0.00..2175.97 rows=52 width=4) (actual time=1.618..3.188 rows=45 loops=2)
+                                                                           Filter: ((d_moy >= 1) AND (d_moy <= 3) AND (d_year = 2002))
+                                                                           Rows Removed by Filter: 36480
+                                             ->  Index Scan using customer_address_pkey on customer_address ca  (cost=0.29..0.36 rows=1 width=4) (actual time=0.002..0.002 rows=0 loops=7048)
+                                                   Index Cond: (ca_address_sk = c.c_current_addr_sk)
+                                                   Filter: (ca_state = ANY ('{IL,TX,ME}'::bpchar[]))
+                                                   Rows Removed by Filter: 1
+                                       ->  Index Scan using customer_demographics_pkey on customer_demographics  (cost=0.43..1.53 rows=1 width=44) (actual time=0.298..0.298 rows=1 loops=803)
+                                             Index Cond: (cd_demo_sk = c.c_current_cdemo_sk)
+                     ->  Materialize  (cost=3176.62..25876.91 rows=876 width=4) (actual time=0.032..0.776 rows=20616 loops=119)
+                           ->  Gather  (cost=3176.62..25872.53 rows=876 width=4) (actual time=3.776..39.759 rows=20792 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Parallel Hash Join  (cost=2176.62..24784.93 rows=365 width=4) (actual time=2.090..38.716 rows=6931 loops=3)
+                                       Hash Cond: (web_sales.ws_sold_date_sk = date_dim_1.d_date_sk)
+                                       ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=8) (actual time=0.033..26.150 rows=239795 loops=3)
+                                       ->  Parallel Hash  (cost=2175.97..2175.97 rows=52 width=4) (actual time=1.925..1.925 rows=30 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                             ->  Parallel Seq Scan on date_dim date_dim_1  (cost=0.00..2175.97 rows=52 width=4) (actual time=0.907..1.891 rows=30 loops=3)
+                                                   Filter: ((d_moy >= 1) AND (d_moy <= 3) AND (d_year = 2002))
+                                                   Rows Removed by Filter: 24320
+               ->  Materialize  (cost=3176.62..48391.47 rows=1747 width=4) (actual time=0.490..1.464 rows=39045 loops=116)
+                     ->  Gather  (cost=3176.62..48382.74 rows=1747 width=4) (actual time=56.808..73.531 rows=40592 loops=1)
+                           Workers Planned: 2
+                           Workers Launched: 2
+                           ->  Parallel Hash Join  (cost=2176.62..47208.04 rows=728 width=4) (actual time=57.040..72.991 rows=13531 loops=3)
+                                 Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_2.d_date_sk)
+                                 ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=600659 width=8) (actual time=0.033..50.654 rows=480516 loops=3)
+                                 ->  Parallel Hash  (cost=2175.97..2175.97 rows=52 width=4) (actual time=1.965..1.965 rows=30 loops=3)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                       ->  Parallel Seq Scan on date_dim date_dim_2  (cost=0.00..2175.97 rows=52 width=4) (actual time=0.895..1.928 rows=30 loops=3)
+                                             Filter: ((d_moy >= 1) AND (d_moy <= 3) AND (d_year = 2002))
+                                             Rows Removed by Filter: 24320
+ Planning Time: 2.138 ms
+ Execution Time: 743.660 ms
+(63 rows)
+

@@ -1,0 +1,147 @@
+                                                                                                QUERY PLAN                                                                                                 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=435352.49..435352.50 rows=1 width=32) (actual time=2938.554..2939.560 rows=1 loops=1)
+   CTE frequent_ss_items
+     ->  Finalize HashAggregate  (cost=77177.56..77905.02 rows=18186 width=48) (actual time=1067.010..1575.780 rows=43 loops=1)
+           Group Key: (substr((item.i_item_desc)::text, 1, 30)), item.i_item_sk, date_dim_2.d_date
+           Filter: (count(*) > 4)
+           Batches: 37  Memory Usage: 8281kB  Disk Usage: 104032kB
+           Rows Removed by Filter: 1491101
+           ->  Gather  (cost=71892.14..76722.90 rows=45466 width=48) (actual time=517.256..736.654 rows=1596533 loops=1)
+                 Workers Planned: 2
+                 Workers Launched: 2
+                 ->  Partial HashAggregate  (cost=70892.14..71176.30 rows=22733 width=48) (actual time=515.258..691.547 rows=532178 loops=3)
+                       Group Key: substr((item.i_item_desc)::text, 1, 30), item.i_item_sk, date_dim_2.d_date
+                       Batches: 21  Memory Usage: 8249kB  Disk Usage: 28296kB
+                       Worker 0:  Batches: 21  Memory Usage: 8249kB  Disk Usage: 28288kB
+                       Worker 1:  Batches: 21  Memory Usage: 8249kB  Disk Usage: 28352kB
+                       ->  Parallel Hash Join  (cost=3601.43..70664.81 rows=22733 width=40) (actual time=5.744..348.067 rows=551858 loops=3)
+                             Hash Cond: (store_sales.ss_item_sk = item.i_item_sk)
+                             ->  Parallel Hash Join  (cost=2079.20..69026.06 rows=22733 width=8) (actual time=2.988..158.413 rows=551858 loops=3)
+                                   Hash Cond: (store_sales.ss_sold_date_sk = date_dim_2.d_date_sk)
+                                   ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=8) (actual time=0.065..76.576 rows=960135 loops=3)
+                                   ->  Parallel Hash  (cost=2068.55..2068.55 rows=852 width=8) (actual time=2.886..2.886 rows=487 loops=3)
+                                         Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                         ->  Parallel Seq Scan on date_dim date_dim_2  (cost=0.00..2068.55 rows=852 width=8) (actual time=1.405..2.780 rows=487 loops=3)
+                                               Filter: (d_year = ANY ('{2000,2001,2002,2003}'::integer[]))
+                                               Rows Removed by Filter: 23863
+                             ->  Parallel Hash  (cost=1389.88..1389.88 rows=10588 width=106) (actual time=2.694..2.695 rows=6000 loops=3)
+                                   Buckets: 32768  Batches: 1  Memory Usage: 2816kB
+                                   ->  Parallel Seq Scan on item  (cost=0.00..1389.88 rows=10588 width=106) (actual time=0.004..1.793 rows=6000 loops=3)
+   CTE best_ss_customer
+     ->  Finalize GroupAggregate  (cost=254643.46..281228.42 rows=33333 width=36) (actual time=1124.721..1195.336 rows=17 loops=1)
+           Group Key: customer_1.c_customer_sk
+           Filter: (sum(((store_sales_2.ss_quantity)::numeric * store_sales_2.ss_sales_price)) > (0.95000000000000000000 * $3))
+           Rows Removed by Filter: 90841
+           InitPlan 2 (returns $3)
+             ->  Aggregate  (cost=81403.45..81403.46 rows=1 width=32) (actual time=576.653..576.835 rows=1 loops=1)
+                   ->  Finalize GroupAggregate  (cost=74214.78..80751.63 rows=52146 width=36) (actual time=418.137..574.772 rows=76412 loops=1)
+                         Group Key: customer.c_customer_sk
+                         ->  Gather Merge  (cost=74214.78..79773.88 rows=43456 width=36) (actual time=418.133..536.977 rows=115208 loops=1)
+                               Workers Planned: 2
+                               Workers Launched: 2
+                               ->  Partial GroupAggregate  (cost=73214.76..73757.96 rows=21728 width=36) (actual time=415.422..524.704 rows=38403 loops=3)
+                                     Group Key: customer.c_customer_sk
+                                     ->  Sort  (cost=73214.76..73269.08 rows=21728 width=14) (actual time=415.404..443.150 rows=538865 loops=3)
+                                           Sort Key: customer.c_customer_sk
+                                           Sort Method: external merge  Disk: 12968kB
+                                           Worker 0:  Sort Method: external merge  Disk: 13096kB
+                                           Worker 1:  Sort Method: external merge  Disk: 13208kB
+                                           ->  Parallel Hash Join  (cost=4643.02..71649.55 rows=21728 width=14) (actual time=7.825..286.039 rows=538865 loops=3)
+                                                 Hash Cond: (store_sales_1.ss_customer_sk = customer.c_customer_sk)
+                                                 ->  Parallel Hash Join  (cost=2079.20..69026.06 rows=22733 width=14) (actual time=2.738..213.703 rows=551858 loops=3)
+                                                       Hash Cond: (store_sales_1.ss_sold_date_sk = date_dim_3.d_date_sk)
+                                                       ->  Parallel Seq Scan on store_sales store_sales_1  (cost=0.00..63795.71 rows=1200371 width=18) (actual time=0.055..90.483 rows=960135 loops=3)
+                                                       ->  Parallel Hash  (cost=2068.55..2068.55 rows=852 width=4) (actual time=2.651..2.651 rows=487 loops=3)
+                                                             Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                                             ->  Parallel Seq Scan on date_dim date_dim_3  (cost=0.00..2068.55 rows=852 width=4) (actual time=1.287..2.554 rows=487 loops=3)
+                                                                   Filter: (d_year = ANY ('{2000,2001,2002,2003}'::integer[]))
+                                                                   Rows Removed by Filter: 23863
+                                                 ->  Parallel Hash  (cost=2042.98..2042.98 rows=41667 width=4) (actual time=5.014..5.014 rows=33333 loops=3)
+                                                       Buckets: 131072  Batches: 1  Memory Usage: 4960kB
+                                                       ->  Parallel Index Only Scan using customer_pkey on customer  (cost=0.29..2042.98 rows=41667 width=4) (actual time=0.025..1.508 rows=33333 loops=3)
+                                                             Heap Fetches: 0
+           ->  Gather Merge  (cost=173240.00..196574.96 rows=200000 width=36) (actual time=548.008..564.659 rows=165833 loops=1)
+                 Workers Planned: 2
+                 Workers Launched: 2
+                 ->  Sort  (cost=172239.98..172489.98 rows=100000 width=36) (actual time=545.422..548.128 rows=55278 loops=3)
+                       Sort Key: customer_1.c_customer_sk
+                       Sort Method: external merge  Disk: 4376kB
+                       Worker 0:  Sort Method: external merge  Disk: 4392kB
+                       Worker 1:  Sort Method: external merge  Disk: 4376kB
+                       ->  Partial HashAggregate  (cost=148744.30..161198.16 rows=100000 width=36) (actual time=416.798..530.883 rows=55278 loops=3)
+                             Group Key: customer_1.c_customer_sk
+                             Planned Partitions: 4  Batches: 5  Memory Usage: 8241kB  Disk Usage: 19656kB
+                             Worker 0:  Batches: 5  Memory Usage: 8241kB  Disk Usage: 19736kB
+                             Worker 1:  Batches: 5  Memory Usage: 8241kB  Disk Usage: 19648kB
+                             ->  Parallel Hash Join  (cost=2563.82..69510.62 rows=1147275 width=14) (actual time=4.723..221.682 rows=916884 loops=3)
+                                   Hash Cond: (store_sales_2.ss_customer_sk = customer_1.c_customer_sk)
+                                   ->  Parallel Seq Scan on store_sales store_sales_2  (cost=0.00..63795.71 rows=1200371 width=14) (actual time=0.049..76.493 rows=960135 loops=3)
+                                   ->  Parallel Hash  (cost=2042.98..2042.98 rows=41667 width=4) (actual time=4.596..4.597 rows=33333 loops=3)
+                                         Buckets: 131072  Batches: 1  Memory Usage: 4992kB
+                                         ->  Parallel Index Only Scan using customer_pkey on customer customer_1  (cost=0.29..2042.98 rows=41667 width=4) (actual time=0.025..1.528 rows=33333 loops=3)
+                                               Heap Fetches: 0
+   ->  Aggregate  (cost=76219.05..76219.06 rows=1 width=32) (actual time=2938.553..2939.056 rows=1 loops=1)
+         ->  Append  (cost=4236.95..76218.48 rows=227 width=32) (actual time=2938.551..2939.054 rows=0 loops=1)
+               ->  Hash Join  (cost=4236.95..49337.47 rows=151 width=32) (actual time=2849.798..2849.821 rows=0 loops=1)
+                     Hash Cond: (catalog_sales.cs_item_sk = frequent_ss_items.item_sk)
+                     ->  Hash Join  (cost=3823.27..48920.55 rows=303 width=14) (actual time=1274.035..1274.058 rows=0 loops=1)
+                           Hash Cond: (catalog_sales.cs_bill_customer_sk = best_ss_customer.c_customer_sk)
+                           ->  Gather  (cost=3068.78..48161.09 rows=609 width=18) (actual time=38.450..78.370 rows=14018 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Parallel Hash Join  (cost=2068.78..47100.19 rows=254 width=18) (actual time=36.723..76.465 rows=4673 loops=3)
+                                       Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                                       ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=600659 width=22) (actual time=0.044..53.966 rows=480516 loops=3)
+                                       ->  Parallel Hash  (cost=2068.55..2068.55 rows=18 width=4) (actual time=2.028..2.028 rows=10 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                             ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=18 width=4) (actual time=1.308..2.003 rows=10 loops=3)
+                                                   Filter: ((d_year = 2000) AND (d_moy = 7))
+                                                   Rows Removed by Filter: 24339
+                           ->  Hash  (cost=751.99..751.99 rows=200 width=4) (actual time=1195.007..1195.007 rows=17 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                 ->  HashAggregate  (cost=749.99..751.99 rows=200 width=4) (actual time=1194.999..1195.001 rows=17 loops=1)
+                                       Group Key: best_ss_customer.c_customer_sk
+                                       Batches: 1  Memory Usage: 40kB
+                                       ->  CTE Scan on best_ss_customer  (cost=0.00..666.66 rows=33333 width=4) (actual time=1124.726..1194.977 rows=17 loops=1)
+                     ->  Hash  (cost=411.19..411.19 rows=200 width=4) (actual time=1575.755..1575.755 rows=43 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                           ->  HashAggregate  (cost=409.19..411.19 rows=200 width=4) (actual time=1575.743..1575.746 rows=43 loops=1)
+                                 Group Key: frequent_ss_items.item_sk
+                                 Batches: 1  Memory Usage: 40kB
+                                 ->  CTE Scan on frequent_ss_items  (cost=0.00..363.72 rows=18186 width=4) (actual time=1067.016..1575.708 rows=43 loops=1)
+               ->  Hash Join  (cost=4236.95..26879.87 rows=76 width=32) (actual time=88.751..89.229 rows=0 loops=1)
+                     Hash Cond: (web_sales.ws_bill_customer_sk = best_ss_customer_1.c_customer_sk)
+                     ->  Hash Join  (cost=3482.46..26123.75 rows=152 width=14) (actual time=9.627..89.179 rows=22 loops=1)
+                           Hash Cond: (web_sales.ws_item_sk = frequent_ss_items_1.item_sk)
+                           ->  Gather  (cost=3068.78..25707.58 rows=305 width=18) (actual time=4.710..87.933 rows=6668 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Parallel Hash Join  (cost=2068.78..24677.08 rows=127 width=18) (actual time=2.265..85.360 rows=2223 loops=3)
+                                       Hash Cond: (web_sales.ws_sold_date_sk = date_dim_1.d_date_sk)
+                                       ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=22) (actual time=0.040..72.592 rows=239795 loops=3)
+                                       ->  Parallel Hash  (cost=2068.55..2068.55 rows=18 width=4) (actual time=2.011..2.011 rows=10 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                             ->  Parallel Seq Scan on date_dim date_dim_1  (cost=0.00..2068.55 rows=18 width=4) (actual time=1.292..1.974 rows=10 loops=3)
+                                                   Filter: ((d_year = 2000) AND (d_moy = 7))
+                                                   Rows Removed by Filter: 24339
+                           ->  Hash  (cost=411.19..411.19 rows=200 width=4) (actual time=0.064..0.065 rows=43 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                                 ->  HashAggregate  (cost=409.19..411.19 rows=200 width=4) (actual time=0.059..0.062 rows=43 loops=1)
+                                       Group Key: frequent_ss_items_1.item_sk
+                                       Batches: 1  Memory Usage: 40kB
+                                       ->  CTE Scan on frequent_ss_items frequent_ss_items_1  (cost=0.00..363.72 rows=18186 width=4) (actual time=0.001..0.004 rows=43 loops=1)
+                     ->  Hash  (cost=751.99..751.99 rows=200 width=4) (actual time=0.024..0.024 rows=17 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           ->  HashAggregate  (cost=749.99..751.99 rows=200 width=4) (actual time=0.020..0.022 rows=17 loops=1)
+                                 Group Key: best_ss_customer_1.c_customer_sk
+                                 Batches: 1  Memory Usage: 40kB
+                                 ->  CTE Scan on best_ss_customer best_ss_customer_1  (cost=0.00..666.66 rows=33333 width=4) (actual time=0.008..0.009 rows=17 loops=1)
+ Planning Time: 2.071 ms
+ Execution Time: 2962.176 ms
+(139 rows)
+
+ c_last_name | c_first_name | sales 
+-------------+--------------+-------
+(0 rows)
+

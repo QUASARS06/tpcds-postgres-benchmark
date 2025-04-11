@@ -1,0 +1,91 @@
+                                                                                                  QUERY PLAN                                                                                                   
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=73311.13..73313.31 rows=8 width=1254) (actual time=222.966..223.066 rows=5 loops=1)
+   ->  GroupAggregate  (cost=73311.13..73313.31 rows=8 width=1254) (actual time=222.966..223.065 rows=5 loops=1)
+         Group Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country, ('ORIENTAL,BOXBUNDLES'::text), date_dim.d_year
+         ->  Sort  (cost=73311.13..73311.15 rows=8 width=870) (actual time=222.950..223.019 rows=10 loops=1)
+               Sort Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country, ('ORIENTAL,BOXBUNDLES'::text), date_dim.d_year
+               Sort Method: quicksort  Memory: 28kB
+               ->  Append  (cost=25162.72..73311.01 rows=8 width=870) (actual time=102.211..223.004 rows=10 loops=1)
+                     ->  Finalize GroupAggregate  (cost=25162.72..25178.16 rows=4 width=870) (actual time=102.211..103.334 rows=5 loops=1)
+                           Group Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country
+                           ->  Gather Merge  (cost=25162.72..25176.80 rows=8 width=838) (actual time=101.880..103.240 rows=15 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Partial GroupAggregate  (cost=24162.70..24175.85 rows=4 width=838) (actual time=98.635..99.904 rows=5 loops=3)
+                                       Group Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country
+                                       ->  Sort  (cost=24162.70..24162.82 rows=50 width=91) (actual time=98.284..98.335 rows=2202 loops=3)
+                                             Sort Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country
+                                             Sort Method: quicksort  Memory: 350kB
+                                             Worker 0:  Sort Method: quicksort  Memory: 348kB
+                                             Worker 1:  Sort Method: quicksort  Memory: 358kB
+                                             ->  Hash Join  (cost=2.98..24161.29 rows=50 width=91) (actual time=0.590..97.275 rows=2202 loops=3)
+                                                   Hash Cond: (web_sales.ws_warehouse_sk = warehouse.w_warehouse_sk)
+                                                   ->  Nested Loop  (cost=1.87..24159.93 rows=50 width=29) (actual time=0.564..96.918 rows=2202 loops=3)
+                                                         ->  Nested Loop  (cost=1.58..24111.96 rows=148 width=33) (actual time=0.066..48.915 rows=4928 loops=3)
+                                                               ->  Hash Join  (cost=1.27..22776.24 rows=29970 width=29) (actual time=0.041..42.209 rows=24091 loops=3)
+                                                                     Hash Cond: (web_sales.ws_ship_mode_sk = ship_mode.sm_ship_mode_sk)
+                                                                     ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=33) (actual time=0.015..21.717 rows=239795 loops=3)
+                                                                     ->  Hash  (cost=1.25..1.25 rows=2 width=4) (actual time=0.019..0.019 rows=2 loops=3)
+                                                                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                           ->  Seq Scan on ship_mode  (cost=0.00..1.25 rows=2 width=4) (actual time=0.017..0.018 rows=2 loops=3)
+                                                                                 Filter: (sm_carrier = ANY ('{ORIENTAL,BOXBUNDLES}'::bpchar[]))
+                                                                                 Rows Removed by Filter: 18
+                                                               ->  Memoize  (cost=0.30..0.33 rows=1 width=12) (actual time=0.000..0.000 rows=0 loops=72272)
+                                                                     Cache Key: web_sales.ws_sold_date_sk
+                                                                     Cache Mode: logical
+                                                                     Hits: 22012  Misses: 1814  Evictions: 0  Overflows: 0  Memory Usage: 136kB
+                                                                     Worker 0:  Hits: 22512  Misses: 1816  Evictions: 0  Overflows: 0  Memory Usage: 137kB
+                                                                     Worker 1:  Hits: 22303  Misses: 1815  Evictions: 0  Overflows: 0  Memory Usage: 137kB
+                                                                     ->  Index Scan using date_dim_pkey on date_dim  (cost=0.29..0.32 rows=1 width=12) (actual time=0.001..0.001 rows=0 loops=5445)
+                                                                           Index Cond: (d_date_sk = web_sales.ws_sold_date_sk)
+                                                                           Filter: (d_year = 2001)
+                                                                           Rows Removed by Filter: 1
+                                                         ->  Index Scan using time_dim_pkey on time_dim  (cost=0.29..0.32 rows=1 width=4) (actual time=0.010..0.010 rows=0 loops=14785)
+                                                               Index Cond: (t_time_sk = web_sales.ws_sold_time_sk)
+                                                               Filter: ((t_time >= 42970) AND (t_time <= 71770))
+                                                               Rows Removed by Filter: 1
+                                                   ->  Hash  (cost=1.05..1.05 rows=5 width=70) (actual time=0.020..0.020 rows=5 loops=3)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                         ->  Seq Scan on warehouse  (cost=0.00..1.05 rows=5 width=70) (actual time=0.015..0.016 rows=5 loops=3)
+                     ->  Finalize GroupAggregate  (cost=48105.01..48132.81 rows=4 width=870) (actual time=117.589..119.668 rows=5 loops=1)
+                           Group Key: warehouse_1.w_warehouse_name, warehouse_1.w_warehouse_sq_ft, warehouse_1.w_city, warehouse_1.w_county, warehouse_1.w_state, warehouse_1.w_country
+                           ->  Gather Merge  (cost=48105.01..48131.45 rows=8 width=838) (actual time=116.873..119.572 rows=15 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Partial GroupAggregate  (cost=47104.99..47130.50 rows=4 width=838) (actual time=112.529..115.019 rows=5 loops=3)
+                                       Group Key: warehouse_1.w_warehouse_name, warehouse_1.w_warehouse_sq_ft, warehouse_1.w_city, warehouse_1.w_county, warehouse_1.w_state, warehouse_1.w_country
+                                       ->  Sort  (cost=47104.99..47105.23 rows=98 width=91) (actual time=111.906..112.005 rows=4234 loops=3)
+                                             Sort Key: warehouse_1.w_warehouse_name, warehouse_1.w_warehouse_sq_ft, warehouse_1.w_city, warehouse_1.w_county, warehouse_1.w_state, warehouse_1.w_country
+                                             Sort Method: quicksort  Memory: 709kB
+                                             Worker 0:  Sort Method: quicksort  Memory: 568kB
+                                             Worker 1:  Sort Method: quicksort  Memory: 682kB
+                                             ->  Hash Join  (cost=1966.47..47101.75 rows=98 width=91) (actual time=45.084..110.172 rows=4234 loops=3)
+                                                   Hash Cond: (catalog_sales.cs_warehouse_sk = warehouse_1.w_warehouse_sk)
+                                                   ->  Nested Loop  (cost=1965.36..47100.15 rows=98 width=29) (actual time=45.051..109.604 rows=4237 loops=3)
+                                                         ->  Hash Join  (cost=1965.06..47005.88 rows=295 width=33) (actual time=45.023..95.795 rows=9517 loops=3)
+                                                               Hash Cond: (catalog_sales.cs_ship_mode_sk = ship_mode_1.sm_ship_mode_sk)
+                                                               ->  Parallel Hash Join  (cost=1963.79..46995.20 rows=2961 width=37) (actual time=42.594..90.654 rows=95569 loops=3)
+                                                                     Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                                                     ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=600659 width=33) (actual time=0.037..52.599 rows=480516 loops=3)
+                                                                     ->  Parallel Hash  (cost=1961.12..1961.12 rows=213 width=12) (actual time=1.882..1.882 rows=122 loops=3)
+                                                                           Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                                           ->  Parallel Seq Scan on date_dim date_dim_1  (cost=0.00..1961.12 rows=213 width=12) (actual time=0.882..1.856 rows=122 loops=3)
+                                                                                 Filter: (d_year = 2001)
+                                                                                 Rows Removed by Filter: 24228
+                                                               ->  Hash  (cost=1.25..1.25 rows=2 width=4) (actual time=0.020..0.020 rows=2 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                     ->  Seq Scan on ship_mode ship_mode_1  (cost=0.00..1.25 rows=2 width=4) (actual time=0.018..0.018 rows=2 loops=3)
+                                                                           Filter: (sm_carrier = ANY ('{ORIENTAL,BOXBUNDLES}'::bpchar[]))
+                                                                           Rows Removed by Filter: 18
+                                                         ->  Index Scan using time_dim_pkey on time_dim time_dim_1  (cost=0.29..0.32 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=28551)
+                                                               Index Cond: (t_time_sk = catalog_sales.cs_sold_time_sk)
+                                                               Filter: ((t_time >= 42970) AND (t_time <= 71770))
+                                                               Rows Removed by Filter: 1
+                                                   ->  Hash  (cost=1.05..1.05 rows=5 width=70) (actual time=0.022..0.023 rows=5 loops=3)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                         ->  Seq Scan on warehouse warehouse_1  (cost=0.00..1.05 rows=5 width=70) (actual time=0.018..0.019 rows=5 loops=3)
+ Planning Time: 2.645 ms
+ Execution Time: 223.271 ms
+(87 rows)
+

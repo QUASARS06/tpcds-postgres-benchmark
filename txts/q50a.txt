@@ -1,0 +1,37 @@
+                                                                                                         QUERY PLAN                                                                                                          
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=9471.22..9471.45 rows=1 width=125) (actual time=28.572..30.539 rows=6 loops=1)
+   ->  GroupAggregate  (cost=9471.22..9471.45 rows=1 width=125) (actual time=28.572..30.538 rows=6 loops=1)
+         Group Key: store.s_store_name, store.s_company_id, store.s_street_number, store.s_street_name, store.s_street_type, store.s_suite_number, store.s_city, store.s_county, store.s_state, store.s_zip
+         ->  Nested Loop  (cost=9471.22..9471.36 rows=1 width=93) (actual time=28.209..29.957 rows=2105 loops=1)
+               ->  Gather Merge  (cost=9470.93..9471.05 rows=1 width=93) (actual time=27.805..28.374 rows=2136 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     ->  Sort  (cost=8470.90..8470.91 rows=1 width=93) (actual time=26.175..26.199 rows=712 loops=3)
+                           Sort Key: store.s_store_name, store.s_company_id, store.s_street_number, store.s_street_name, store.s_street_type, store.s_suite_number, store.s_city, store.s_county, store.s_state, store.s_zip
+                           Sort Method: quicksort  Memory: 105kB
+                           Worker 0:  Sort Method: quicksort  Memory: 110kB
+                           Worker 1:  Sort Method: quicksort  Memory: 117kB
+                           ->  Nested Loop  (cost=2069.34..8470.89 rows=1 width=93) (actual time=3.560..25.533 rows=712 loops=3)
+                                 ->  Nested Loop  (cost=2069.20..8470.74 rows=1 width=12) (actual time=3.552..24.936 rows=732 loops=3)
+                                       ->  Parallel Hash Join  (cost=2068.78..8405.24 rows=49 width=16) (actual time=3.495..14.559 rows=992 loops=3)
+                                             Hash Cond: (store_returns.sr_returned_date_sk = d2.d_date_sk)
+                                             ->  Parallel Seq Scan on store_returns  (cost=0.00..6021.98 rows=119798 width=16) (actual time=0.034..7.004 rows=95838 loops=3)
+                                             ->  Parallel Hash  (cost=2068.55..2068.55 rows=18 width=4) (actual time=3.406..3.406 rows=10 loops=3)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                                   ->  Parallel Seq Scan on date_dim d2  (cost=0.00..2068.55 rows=18 width=4) (actual time=2.214..3.377 rows=10 loops=3)
+                                                         Filter: ((d_year = 2001) AND (d_moy = 8))
+                                                         Rows Removed by Filter: 24339
+                                       ->  Index Scan using store_sales_pkey on store_sales  (cost=0.43..1.33 rows=1 width=20) (actual time=0.010..0.010 rows=1 loops=2976)
+                                             Index Cond: ((ss_item_sk = store_returns.sr_item_sk) AND (ss_ticket_number = store_returns.sr_ticket_number))
+                                             Filter: (store_returns.sr_customer_sk = ss_customer_sk)
+                                             Rows Removed by Filter: 0
+                                 ->  Index Scan using store_pkey on store  (cost=0.14..0.15 rows=1 width=89) (actual time=0.000..0.000 rows=1 loops=2196)
+                                       Index Cond: (s_store_sk = store_sales.ss_store_sk)
+               ->  Index Only Scan using date_dim_pkey on date_dim d1  (cost=0.29..0.31 rows=1 width=4) (actual time=0.001..0.001 rows=1 loops=2136)
+                     Index Cond: (d_date_sk = store_sales.ss_sold_date_sk)
+                     Heap Fetches: 0
+ Planning Time: 1.890 ms
+ Execution Time: 30.609 ms
+(33 rows)
+

@@ -1,0 +1,7 @@
+services:
+  bigdata:
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    build: .
+    container_name: bigdata
+    command: /bin/bash

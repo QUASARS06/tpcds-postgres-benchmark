@@ -1,0 +1,39 @@
+                                                                                            QUERY PLAN                                                                                             
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=25736.67..25736.89 rows=88 width=291) (actual time=275.042..275.092 rows=100 loops=1)
+   ->  Sort  (cost=25736.67..25736.89 rows=88 width=291) (actual time=275.041..275.088 rows=100 loops=1)
+         Sort Key: item.i_category, item.i_class, item.i_item_id, item.i_item_desc, ((((sum(web_sales.ws_ext_sales_price)) * '100'::numeric) / sum((sum(web_sales.ws_ext_sales_price))) OVER (?)))
+         Sort Method: top-N heapsort  Memory: 98kB
+         ->  WindowAgg  (cost=25731.84..25733.82 rows=88 width=291) (actual time=273.728..274.433 rows=1553 loops=1)
+               ->  Sort  (cost=25731.84..25732.06 rows=88 width=259) (actual time=273.690..273.770 rows=1553 loops=1)
+                     Sort Key: item.i_class
+                     Sort Method: quicksort  Memory: 451kB
+                     ->  Finalize GroupAggregate  (cost=25716.96..25729.00 rows=88 width=259) (actual time=271.470..273.156 rows=1553 loops=1)
+                           Group Key: item.i_item_id, item.i_item_desc, item.i_category, item.i_class, item.i_current_price
+                           ->  Gather Merge  (cost=25716.96..25726.61 rows=74 width=259) (actual time=271.464..272.218 rows=1967 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Partial GroupAggregate  (cost=24716.93..24718.04 rows=37 width=259) (actual time=269.085..269.435 rows=656 loops=3)
+                                       Group Key: item.i_item_id, item.i_item_desc, item.i_category, item.i_class, item.i_current_price
+                                       ->  Sort  (cost=24716.93..24717.02 rows=37 width=233) (actual time=269.078..269.102 rows=755 loops=3)
+                                             Sort Key: item.i_item_id, item.i_item_desc, item.i_category, item.i_class, item.i_current_price
+                                             Sort Method: quicksort  Memory: 209kB
+                                             Worker 0:  Sort Method: quicksort  Memory: 212kB
+                                             Worker 1:  Sort Method: quicksort  Memory: 238kB
+                                             ->  Nested Loop  (cost=2069.06..24715.97 rows=37 width=233) (actual time=5.703..268.644 rows=755 loops=3)
+                                                   ->  Parallel Hash Join  (cost=2068.78..24677.08 rows=123 width=10) (actual time=5.331..226.141 rows=2485 loops=3)
+                                                         Hash Cond: (web_sales.ws_sold_date_sk = date_dim.d_date_sk)
+                                                         ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=14) (actual time=0.449..209.613 rows=239795 loops=3)
+                                                         ->  Parallel Hash  (cost=2068.55..2068.55 rows=18 width=4) (actual time=4.229..4.229 rows=10 loops=3)
+                                                               Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                                               ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=18 width=4) (actual time=2.455..4.210 rows=10 loops=3)
+                                                                     Filter: ((d_date >= '2001-06-15'::date) AND (d_date <= '2001-07-15'::date))
+                                                                     Rows Removed by Filter: 24339
+                                                   ->  Index Scan using item_pkey on item  (cost=0.29..0.32 rows=1 width=231) (actual time=0.017..0.017 rows=0 loops=7455)
+                                                         Index Cond: (i_item_sk = web_sales.ws_item_sk)
+                                                         Filter: (i_category = ANY ('{Men,Books,Electronics}'::bpchar[]))
+                                                         Rows Removed by Filter: 1
+ Planning Time: 5.576 ms
+ Execution Time: 275.156 ms
+(35 rows)
+

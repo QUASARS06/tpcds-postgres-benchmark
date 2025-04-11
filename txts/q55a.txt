@@ -1,0 +1,40 @@
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=55761.33..55761.36 rows=11 width=87) (actual time=57.971..59.443 rows=73 loops=1)
+   ->  Sort  (cost=55761.33..55761.36 rows=11 width=87) (actual time=57.971..59.439 rows=73 loops=1)
+         Sort Key: (sum(store_sales.ss_ext_sales_price)) DESC, item.i_brand_id
+         Sort Method: quicksort  Memory: 34kB
+         ->  Finalize GroupAggregate  (cost=55760.13..55761.14 rows=11 width=87) (actual time=57.839..59.405 rows=73 loops=1)
+               Group Key: item.i_brand, item.i_brand_id
+               ->  Gather Merge  (cost=55760.13..55760.94 rows=6 width=87) (actual time=57.835..59.372 rows=83 loops=1)
+                     Workers Planned: 1
+                     Workers Launched: 1
+                     ->  Partial GroupAggregate  (cost=54760.12..54760.26 rows=6 width=87) (actual time=56.549..56.612 rows=42 loops=2)
+                           Group Key: item.i_brand, item.i_brand_id
+                           ->  Sort  (cost=54760.12..54760.14 rows=6 width=61) (actual time=56.538..56.548 rows=440 loops=2)
+                                 Sort Key: item.i_brand, item.i_brand_id
+                                 Sort Method: quicksort  Memory: 60kB
+                                 Worker 0:  Sort Method: quicksort  Memory: 64kB
+                                 ->  Nested Loop  (cost=6.05..54760.05 rows=6 width=61) (actual time=0.692..56.376 rows=440 loops=2)
+                                       ->  Nested Loop  (cost=5.75..53783.63 rows=15911 width=65) (actual time=0.085..50.999 rows=14183 loops=2)
+                                             ->  Parallel Seq Scan on item  (cost=0.00..1416.35 rows=99 width=59) (actual time=0.040..4.125 rows=84 loops=2)
+                                                   Filter: (i_manager_id = 52)
+                                                   Rows Removed by Filter: 8916
+                                             ->  Bitmap Heap Scan on store_sales  (cost=5.75..527.23 rows=173 width=14) (actual time=0.033..0.535 rows=168 loops=169)
+                                                   Recheck Cond: (ss_item_sk = item.i_item_sk)
+                                                   Heap Blocks: exact=14027
+                                                   ->  Bitmap Index Scan on store_sales_pkey  (cost=0.00..5.70 rows=173 width=0) (actual time=0.020..0.020 rows=168 loops=169)
+                                                         Index Cond: (ss_item_sk = item.i_item_sk)
+                                       ->  Memoize  (cost=0.30..0.33 rows=1 width=4) (actual time=0.000..0.000 rows=0 loops=28366)
+                                             Cache Key: store_sales.ss_sold_date_sk
+                                             Cache Mode: logical
+                                             Hits: 12231  Misses: 1812  Evictions: 0  Overflows: 0  Memory Usage: 122kB
+                                             Worker 0:  Hits: 12521  Misses: 1802  Evictions: 0  Overflows: 0  Memory Usage: 121kB
+                                             ->  Index Scan using date_dim_pkey on date_dim  (cost=0.29..0.32 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=3614)
+                                                   Index Cond: (d_date_sk = store_sales.ss_sold_date_sk)
+                                                   Filter: ((d_moy = 11) AND (d_year = 2000))
+                                                   Rows Removed by Filter: 1
+ Planning Time: 4.323 ms
+ Execution Time: 59.520 ms
+(36 rows)
+

@@ -1,0 +1,12 @@
+SCALE=1
+USERNAME=chiragjain
+PASSWORD=
+DATABASE=tpcds
+PORT=5432
+HOSTNAME=host.docker.internal
+
+TPCDSTMP=/proj/tpcds_tmp
+PGDATADIR=/tmp/pgdata
+PGBINDIR=/usr/bin
+TPCDSDIR=/proj/tpcds-postgres/DSGen-software-code-3.2.0rc1
+Q0DIR=/proj/tpcds_queries

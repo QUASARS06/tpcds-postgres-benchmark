@@ -1,0 +1,30 @@
+                                                                                      QUERY PLAN                                                                                      
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=5725.72..5728.94 rows=2 width=125) (actual time=3.377..4.226 rows=0 loops=1)
+   ->  Group  (cost=5725.72..5728.94 rows=2 width=125) (actual time=3.376..4.225 rows=0 loops=1)
+         Group Key: item.i_item_id, item.i_item_desc, item.i_current_price
+         ->  Nested Loop  (cost=5725.72..5728.29 rows=87 width=125) (actual time=3.376..4.225 rows=0 loops=1)
+               ->  Gather Merge  (cost=5725.29..5725.41 rows=1 width=133) (actual time=3.376..4.225 rows=0 loops=1)
+                     Workers Planned: 1
+                     Workers Launched: 1
+                     ->  Sort  (cost=4725.28..4725.28 rows=1 width=133) (actual time=2.283..2.283 rows=0 loops=2)
+                           Sort Key: item.i_item_id, item.i_item_desc, item.i_current_price
+                           Sort Method: quicksort  Memory: 25kB
+                           Worker 0:  Sort Method: quicksort  Memory: 25kB
+                           ->  Nested Loop  (cost=0.43..4725.27 rows=1 width=133) (actual time=2.267..2.268 rows=0 loops=2)
+                                 ->  Parallel Seq Scan on item  (cost=0.00..1495.76 rows=1 width=129) (actual time=2.267..2.267 rows=0 loops=2)
+                                       Filter: ((i_current_price >= '29'::numeric) AND (i_current_price <= '59'::numeric) AND (i_manufact_id = ANY ('{705,742,777,944}'::integer[])))
+                                       Rows Removed by Filter: 9000
+                                 ->  Nested Loop  (cost=0.43..3228.91 rows=59 width=4) (never executed)
+                                       ->  Seq Scan on date_dim  (cost=0.00..2519.73 rows=59 width=4) (never executed)
+                                             Filter: ((d_date >= '2002-03-29'::date) AND (d_date <= '2002-05-28'::date))
+                                       ->  Index Scan using inventory_pkey on inventory  (cost=0.43..12.01 rows=1 width=8) (never executed)
+                                             Index Cond: ((inv_date_sk = date_dim.d_date_sk) AND (inv_item_sk = item.i_item_sk))
+                                             Filter: ((inv_quantity_on_hand >= 100) AND (inv_quantity_on_hand <= 500))
+               ->  Index Only Scan using catalog_sales_pkey on catalog_sales  (cost=0.43..1.99 rows=89 width=4) (never executed)
+                     Index Cond: (cs_item_sk = inventory.inv_item_sk)
+                     Heap Fetches: 0
+ Planning Time: 2.797 ms
+ Execution Time: 4.278 ms
+(26 rows)
+

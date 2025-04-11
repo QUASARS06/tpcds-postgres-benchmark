@@ -1,0 +1,39 @@
+                                                                                                                                                                                                                                                                                                                                                                                                          QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                           
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=129651.65..129738.56 rows=66 width=51) (actual time=1297.832..1299.549 rows=100 loops=1)
+   ->  Finalize GroupAggregate  (cost=129651.65..129738.56 rows=66 width=51) (actual time=1297.832..1299.544 rows=100 loops=1)
+         Group Key: warehouse.w_warehouse_name, item.i_item_id
+         Filter: (((CASE WHEN (sum(CASE WHEN (date_dim.d_date < '1999-06-22'::date) THEN inventory.inv_quantity_on_hand ELSE 0 END) > 0) THEN (sum(CASE WHEN (date_dim.d_date >= '1999-06-22'::date) THEN inventory.inv_quantity_on_hand ELSE 0 END) / sum(CASE WHEN (date_dim.d_date < '1999-06-22'::date) THEN inventory.inv_quantity_on_hand ELSE 0 END)) ELSE NULL::bigint END)::numeric >= 0.66666666666666666667) AND ((CASE WHEN (sum(CASE WHEN (date_dim.d_date < '1999-06-22'::date) THEN inventory.inv_quantity_on_hand ELSE 0 END) > 0) THEN (sum(CASE WHEN (date_dim.d_date >= '1999-06-22'::date) THEN inventory.inv_quantity_on_hand ELSE 0 END) / sum(CASE WHEN (date_dim.d_date < '1999-06-22'::date) THEN inventory.inv_quantity_on_hand ELSE 0 END)) ELSE NULL::bigint END)::numeric <= 1.5000000000000000))
+         Rows Removed by Filter: 79
+         ->  Gather Merge  (cost=129651.65..129715.72 rows=496 width=51) (actual time=1297.820..1299.469 rows=538 loops=1)
+               Workers Planned: 2
+               Workers Launched: 2
+               ->  Partial GroupAggregate  (cost=128651.63..128658.45 rows=248 width=51) (actual time=1295.852..1296.109 rows=566 loops=3)
+                     Group Key: warehouse.w_warehouse_name, item.i_item_id
+                     ->  Sort  (cost=128651.63..128652.25 rows=248 width=43) (actual time=1295.846..1295.885 rows=1692 loops=3)
+                           Sort Key: warehouse.w_warehouse_name, item.i_item_id
+                           Sort Method: quicksort  Memory: 725kB
+                           Worker 0:  Sort Method: quicksort  Memory: 937kB
+                           Worker 1:  Sort Method: quicksort  Memory: 922kB
+                           ->  Hash Join  (cost=2070.40..128641.76 rows=248 width=43) (actual time=331.358..1290.979 rows=8250 loops=3)
+                                 Hash Cond: (inventory.inv_warehouse_sk = warehouse.w_warehouse_sk)
+                                 ->  Nested Loop  (cost=2069.29..128639.44 rows=248 width=29) (actual time=331.294..1290.086 rows=8250 loops=3)
+                                       ->  Parallel Hash Join  (cost=2069.00..127370.93 rows=4086 width=16) (actual time=331.237..1172.033 rows=135000 loops=3)
+                                             Hash Cond: (inventory.inv_date_sk = date_dim.d_date_sk)
+                                             ->  Parallel Seq Scan on inventory  (cost=0.00..112455.59 rows=4893559 width=16) (actual time=0.399..978.952 rows=3915000 loops=3)
+                                             ->  Parallel Hash  (cost=2068.55..2068.55 rows=36 width=8) (actual time=2.036..2.036 rows=20 loops=3)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                                   ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=36 width=8) (actual time=1.266..2.010 rows=20 loops=3)
+                                                         Filter: ((d_date >= '1999-05-23'::date) AND (d_date <= '1999-07-22'::date))
+                                                         Rows Removed by Filter: 24329
+                                       ->  Index Scan using item_pkey on item  (cost=0.29..0.31 rows=1 width=21) (actual time=0.001..0.001 rows=0 loops=405000)
+                                             Index Cond: (i_item_sk = inventory.inv_item_sk)
+                                             Filter: ((i_current_price >= 0.99) AND (i_current_price <= 1.49))
+                                             Rows Removed by Filter: 1
+                                 ->  Hash  (cost=1.05..1.05 rows=5 width=22) (actual time=0.047..0.047 rows=5 loops=3)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       ->  Seq Scan on warehouse  (cost=0.00..1.05 rows=5 width=22) (actual time=0.042..0.043 rows=5 loops=3)
+ Planning Time: 3.011 ms
+ Execution Time: 1299.661 ms
+(35 rows)
+

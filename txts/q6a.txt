@@ -1,0 +1,55 @@
+                                                                                       QUERY PLAN                                                                                       
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=1707806.66..1707806.70 rows=17 width=11) (actual time=73187.740..73187.826 rows=44 loops=1)
+   InitPlan 1 (returns $0)
+     ->  Unique  (cost=2520.47..2520.62 rows=30 width=4) (actual time=5.618..5.621 rows=1 loops=1)
+           ->  Sort  (cost=2520.47..2520.55 rows=30 width=4) (actual time=5.616..5.617 rows=31 loops=1)
+                 Sort Key: date_dim.d_month_seq
+                 Sort Method: quicksort  Memory: 25kB
+                 ->  Seq Scan on date_dim  (cost=0.00..2519.73 rows=30 width=4) (actual time=2.954..5.609 rows=31 loops=1)
+                       Filter: ((d_year = 2002) AND (d_moy = 3))
+                       Rows Removed by Filter: 73018
+   ->  Sort  (cost=1705286.04..1705286.08 rows=17 width=11) (actual time=73187.739..73187.822 rows=44 loops=1)
+         Sort Key: (count(*)), a.ca_state
+         Sort Method: quicksort  Memory: 26kB
+         ->  GroupAggregate  (cost=70237.75..1705285.69 rows=17 width=11) (actual time=1238.393..73187.738 rows=44 loops=1)
+               Group Key: a.ca_state
+               Filter: (count(*) >= 10)
+               Rows Removed by Filter: 6
+               ->  Nested Loop  (cost=70237.75..1705283.25 rows=360 width=3) (actual time=744.420..73186.551 rows=2707 loops=1)
+                     ->  Gather Merge  (cost=70237.46..70363.24 rows=1080 width=7) (actual time=694.898..703.521 rows=25904 loops=1)
+                           Workers Planned: 2
+                           Params Evaluated: $0
+                           Workers Launched: 2
+                           ->  Sort  (cost=69237.43..69238.56 rows=450 width=7) (actual time=687.483..688.165 rows=8635 loops=3)
+                                 Sort Key: a.ca_state
+                                 Sort Method: quicksort  Memory: 655kB
+                                 Worker 0:  Sort Method: quicksort  Memory: 653kB
+                                 Worker 1:  Sort Method: quicksort  Memory: 655kB
+                                 ->  Nested Loop  (cost=1961.93..69217.60 rows=450 width=7) (actual time=2.854..686.064 rows=8635 loops=3)
+                                       ->  Nested Loop  (cost=1961.64..69056.28 rows=450 width=8) (actual time=2.567..648.521 rows=8635 loops=3)
+                                             ->  Parallel Hash Join  (cost=1961.35..68908.21 rows=471 width=8) (actual time=2.545..637.100 rows=8854 loops=3)
+                                                   Hash Cond: (s.ss_sold_date_sk = d.d_date_sk)
+                                                   ->  Parallel Seq Scan on store_sales s  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.269..586.978 rows=960135 loops=3)
+                                                   ->  Parallel Hash  (cost=1961.12..1961.12 rows=18 width=4) (actual time=1.319..1.319 rows=10 loops=3)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 40kB
+                                                         ->  Parallel Seq Scan on date_dim d  (cost=0.00..1961.12 rows=18 width=4) (actual time=0.967..1.301 rows=10 loops=3)
+                                                               Filter: (d_month_seq = $0)
+                                                               Rows Removed by Filter: 24339
+                                             ->  Index Scan using customer_pkey on customer c  (cost=0.29..0.31 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=26563)
+                                                   Index Cond: (c_customer_sk = s.ss_customer_sk)
+                                       ->  Index Scan using customer_address_pkey on customer_address a  (cost=0.29..0.36 rows=1 width=7) (actual time=0.004..0.004 rows=1 loops=25904)
+                                             Index Cond: (ca_address_sk = c.c_current_addr_sk)
+                     ->  Index Scan using item_pkey on item i  (cost=0.29..1513.81 rows=1 width=4) (actual time=2.798..2.798 rows=0 loops=25904)
+                           Index Cond: (i_item_sk = s.ss_item_sk)
+                           Filter: (i_current_price > (1.2 * (SubPlan 2)))
+                           Rows Removed by Filter: 1
+                           SubPlan 2
+                             ->  Aggregate  (cost=1513.49..1513.50 rows=1 width=32) (actual time=2.795..2.795 rows=1 loops=25904)
+                                   ->  Seq Scan on item j  (cost=0.00..1509.00 rows=1796 width=6) (actual time=0.008..2.722 rows=1792 loops=25904)
+                                         Filter: (i_category = i.i_category)
+                                         Rows Removed by Filter: 16208
+ Planning Time: 2.851 ms
+ Execution Time: 73187.944 ms
+(51 rows)
+

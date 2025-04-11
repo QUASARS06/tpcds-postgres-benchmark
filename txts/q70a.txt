@@ -1,0 +1,70 @@
+                                                                                                              QUERY PLAN                                                                                                               
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=142332.59..142332.60 rows=3 width=97) (actual time=445.080..446.226 rows=3 loops=1)
+   ->  Sort  (cost=142332.59..142332.60 rows=3 width=97) (actual time=445.080..446.225 rows=3 loops=1)
+         Sort Key: sub.lochierarchy DESC, (CASE WHEN (sub.lochierarchy = 0) THEN sub.s_state ELSE NULL::bpchar END), sub.rank_within_parent
+         Sort Method: quicksort  Memory: 25kB
+         ->  Subquery Scan on sub  (cost=142332.42..142332.56 rows=3 width=97) (actual time=445.070..446.217 rows=3 loops=1)
+               ->  WindowAgg  (cost=142332.42..142332.53 rows=3 width=97) (actual time=445.069..446.215 rows=3 loops=1)
+                     ->  Sort  (cost=142332.42..142332.43 rows=3 width=89) (actual time=445.066..446.211 rows=3 loops=1)
+                           Sort Key: ((GROUPING(store.s_state) + GROUPING(store.s_county))), (CASE WHEN (GROUPING(store.s_county) = 0) THEN store.s_state ELSE NULL::bpchar END), (sum(store_sales.ss_net_profit)) DESC
+                           Sort Method: quicksort  Memory: 25kB
+                           ->  MixedAggregate  (cost=73481.04..142332.40 rows=3 width=89) (actual time=445.056..446.203 rows=3 loops=1)
+                                 Hash Key: store.s_state, store.s_county
+                                 Hash Key: store.s_state
+                                 Group Key: ()
+                                 Batches: 1  Memory Usage: 32kB
+                                 ->  Nested Loop  (cost=73481.04..142140.65 rows=12778 width=27) (actual time=203.919..329.914 rows=532955 loops=1)
+                                       Join Filter: (store.s_state = store_1.s_state)
+                                       ->  WindowAgg  (cost=70408.61..70408.69 rows=2 width=43) (actual time=200.267..200.374 rows=1 loops=1)
+                                             Run Condition: (rank() OVER (?) <= 5)
+                                             ->  Incremental Sort  (cost=70408.61..70408.65 rows=2 width=35) (actual time=200.263..200.368 rows=1 loops=1)
+                                                   Sort Key: store_1.s_state, (sum(store_sales_1.ss_net_profit)) DESC
+                                                   Presorted Key: store_1.s_state
+                                                   Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 25kB  Peak Memory: 25kB
+                                                   ->  Finalize GroupAggregate  (cost=70368.40..70408.60 rows=1 width=35) (actual time=200.255..200.359 rows=1 loops=1)
+                                                         Group Key: store_1.s_state
+                                                         ->  Gather Merge  (cost=70368.40..70408.57 rows=2 width=35) (actual time=200.251..200.355 rows=3 loops=1)
+                                                               Workers Planned: 2
+                                                               Workers Launched: 2
+                                                               ->  Partial GroupAggregate  (cost=69368.37..69408.31 rows=1 width=35) (actual time=198.558..198.560 rows=1 loops=3)
+                                                                     Group Key: store_1.s_state
+                                                                     ->  Sort  (cost=69368.37..69381.68 rows=5324 width=9) (actual time=177.984..186.151 rows=177652 loops=3)
+                                                                           Sort Key: store_1.s_state
+                                                                           Sort Method: external merge  Disk: 3456kB
+                                                                           Worker 0:  Sort Method: external merge  Disk: 3464kB
+                                                                           Worker 1:  Sort Method: external merge  Disk: 3464kB
+                                                                           ->  Hash Join  (cost=2072.43..69038.86 rows=5324 width=9) (actual time=2.198..154.751 rows=177652 loops=3)
+                                                                                 Hash Cond: (store_sales_1.ss_store_sk = store_1.s_store_sk)
+                                                                                 ->  Parallel Hash Join  (cost=2071.16..69018.02 rows=5573 width=10) (actual time=2.152..140.997 rows=181925 loops=3)
+                                                                                       Hash Cond: (store_sales_1.ss_sold_date_sk = date_dim.d_date_sk)
+                                                                                       ->  Parallel Seq Scan on store_sales store_sales_1  (cost=0.00..63795.71 rows=1200371 width=14) (actual time=0.026..71.757 rows=960135 loops=3)
+                                                                                       ->  Parallel Hash  (cost=2068.55..2068.55 rows=209 width=4) (actual time=2.090..2.090 rows=122 loops=3)
+                                                                                             Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                                                             ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=209 width=4) (actual time=0.897..2.027 rows=122 loops=3)
+                                                                                                   Filter: ((d_month_seq >= 1220) AND (d_month_seq <= 1231))
+                                                                                                   Rows Removed by Filter: 24228
+                                                                                 ->  Hash  (cost=1.12..1.12 rows=12 width=7) (actual time=0.031..0.031 rows=12 loops=3)
+                                                                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                                       ->  Seq Scan on store store_1  (cost=0.00..1.12 rows=12 width=7) (actual time=0.025..0.027 rows=12 loops=3)
+                                       ->  Materialize  (cost=3072.43..71380.55 rows=12778 width=27) (actual time=3.649..90.209 rows=532955 loops=1)
+                                             ->  Gather  (cost=3072.43..71316.66 rows=12778 width=27) (actual time=3.648..38.046 rows=532955 loops=1)
+                                                   Workers Planned: 2
+                                                   Workers Launched: 2
+                                                   ->  Hash Join  (cost=2072.43..69038.86 rows=5324 width=27) (actual time=2.066..152.720 rows=177652 loops=3)
+                                                         Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                                         ->  Parallel Hash Join  (cost=2071.16..69018.02 rows=5573 width=10) (actual time=1.973..137.840 rows=181925 loops=3)
+                                                               Hash Cond: (store_sales.ss_sold_date_sk = d1.d_date_sk)
+                                                               ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=14) (actual time=0.068..67.863 rows=960135 loops=3)
+                                                               ->  Parallel Hash  (cost=2068.55..2068.55 rows=209 width=4) (actual time=1.796..1.796 rows=122 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 40kB
+                                                                     ->  Parallel Seq Scan on date_dim d1  (cost=0.00..2068.55 rows=209 width=4) (actual time=1.361..1.772 rows=122 loops=3)
+                                                                           Filter: ((d_month_seq >= 1220) AND (d_month_seq <= 1231))
+                                                                           Rows Removed by Filter: 24228
+                                                         ->  Hash  (cost=1.12..1.12 rows=12 width=25) (actual time=0.028..0.028 rows=12 loops=3)
+                                                               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                               ->  Seq Scan on store  (cost=0.00..1.12 rows=12 width=25) (actual time=0.021..0.024 rows=12 loops=3)
+ Planning Time: 0.717 ms
+ Execution Time: 448.778 ms
+(66 rows)
+

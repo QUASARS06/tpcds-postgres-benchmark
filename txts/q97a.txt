@@ -1,0 +1,50 @@
+                                                                                    QUERY PLAN                                                                                     
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=120915.56..120915.57 rows=1 width=24) (actual time=473.135..474.322 rows=1 loops=1)
+   ->  Aggregate  (cost=120915.56..120915.57 rows=1 width=24) (actual time=473.134..474.321 rows=1 loops=1)
+         ->  Merge Full Join  (cost=118624.65..120816.93 rows=13150 width=8) (actual time=273.830..439.738 rows=836302 loops=1)
+               Merge Cond: ((store_sales.ss_customer_sk = catalog_sales.cs_bill_customer_sk) AND (store_sales.ss_item_sk = catalog_sales.cs_item_sk))
+               ->  Group  (cost=70358.23..71718.94 rows=13150 width=8) (actual time=172.247..254.065 rows=548694 loops=1)
+                     Group Key: store_sales.ss_customer_sk, store_sales.ss_item_sk
+                     ->  Gather Merge  (cost=70358.23..71664.15 rows=10958 width=8) (actual time=172.244..224.843 rows=552048 loops=1)
+                           Workers Planned: 2
+                           Workers Launched: 2
+                           ->  Group  (cost=69358.21..69399.30 rows=5479 width=8) (actual time=170.236..191.105 rows=184016 loops=3)
+                                 Group Key: store_sales.ss_customer_sk, store_sales.ss_item_sk
+                                 ->  Sort  (cost=69358.21..69371.91 rows=5479 width=8) (actual time=170.234..177.397 rows=184865 loops=3)
+                                       Sort Key: store_sales.ss_customer_sk, store_sales.ss_item_sk
+                                       Sort Method: external merge  Disk: 3240kB
+                                       Worker 0:  Sort Method: external merge  Disk: 3248kB
+                                       Worker 1:  Sort Method: external merge  Disk: 3272kB
+                                       ->  Parallel Hash Join  (cost=2071.11..69017.97 rows=5479 width=8) (actual time=2.155..134.551 rows=184865 loops=3)
+                                             Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                             ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=12) (actual time=0.032..78.734 rows=960135 loops=3)
+                                             ->  Parallel Hash  (cost=2068.55..2068.55 rows=205 width=4) (actual time=2.072..2.072 rows=122 loops=3)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                   ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=205 width=4) (actual time=0.889..2.023 rows=122 loops=3)
+                                                         Filter: ((d_month_seq >= 1199) AND (d_month_seq <= 1210))
+                                                         Rows Removed by Filter: 24228
+               ->  Group  (cost=48266.41..48975.45 rows=6852 width=8) (actual time=101.580..143.726 rows=287769 loops=1)
+                     Group Key: catalog_sales.cs_bill_customer_sk, catalog_sales.cs_item_sk
+                     ->  Gather Merge  (cost=48266.41..48946.90 rows=5710 width=8) (actual time=101.580..128.373 rows=287806 loops=1)
+                           Workers Planned: 2
+                           Workers Launched: 2
+                           ->  Group  (cost=47266.39..47287.80 rows=2855 width=8) (actual time=99.375..110.044 rows=95935 loops=3)
+                                 Group Key: catalog_sales.cs_bill_customer_sk, catalog_sales.cs_item_sk
+                                 ->  Sort  (cost=47266.39..47273.53 rows=2855 width=8) (actual time=99.373..102.858 rows=95941 loops=3)
+                                       Sort Key: catalog_sales.cs_bill_customer_sk, catalog_sales.cs_item_sk
+                                       Sort Method: external merge  Disk: 1688kB
+                                       Worker 0:  Sort Method: external merge  Disk: 1648kB
+                                       Worker 1:  Sort Method: external merge  Disk: 1752kB
+                                       ->  Parallel Hash Join  (cost=2071.11..47102.52 rows=2855 width=8) (actual time=26.726..81.113 rows=95941 loops=3)
+                                             Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                             ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=600659 width=12) (actual time=0.033..51.856 rows=480516 loops=3)
+                                             ->  Parallel Hash  (cost=2068.55..2068.55 rows=205 width=4) (actual time=1.678..1.679 rows=122 loops=3)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 40kB
+                                                   ->  Parallel Seq Scan on date_dim date_dim_1  (cost=0.00..2068.55 rows=205 width=4) (actual time=1.250..1.654 rows=122 loops=3)
+                                                         Filter: ((d_month_seq >= 1199) AND (d_month_seq <= 1210))
+                                                         Rows Removed by Filter: 24228
+ Planning Time: 1.472 ms
+ Execution Time: 475.747 ms
+(46 rows)
+

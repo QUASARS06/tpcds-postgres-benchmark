@@ -1,0 +1,84 @@
+                                                                                                                                                                          QUERY PLAN                                                                                                                                                                           
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=564667.63..564667.74 rows=1 width=288) (actual time=974.818..974.895 rows=1 loops=1)
+   ->  Nested Loop  (cost=564667.63..564667.74 rows=1 width=288) (actual time=974.817..974.894 rows=1 loops=1)
+         ->  Nested Loop  (cost=470630.13..470630.22 rows=1 width=240) (actual time=812.488..812.554 rows=1 loops=1)
+               ->  Nested Loop  (cost=376793.49..376793.56 rows=1 width=192) (actual time=648.640..648.698 rows=1 loops=1)
+                     ->  Nested Loop  (cost=282800.51..282800.56 rows=1 width=144) (actual time=487.340..487.385 rows=1 loops=1)
+                           ->  Nested Loop  (cost=188686.38..188686.41 rows=1 width=96) (actual time=327.273..327.310 rows=1 loops=1)
+                                 ->  Aggregate  (cost=94160.41..94160.42 rows=1 width=48) (actual time=164.120..164.147 rows=1 loops=1)
+                                       ->  Gather Merge  (cost=89813.77..93897.44 rows=35063 width=6) (actual time=157.956..161.763 rows=30760 loops=1)
+                                             Workers Planned: 2
+                                             Workers Launched: 2
+                                             ->  Sort  (cost=88813.75..88850.27 rows=14610 width=6) (actual time=156.143..156.372 rows=10253 loops=3)
+                                                   Sort Key: store_sales.ss_list_price
+                                                   Sort Method: quicksort  Memory: 546kB
+                                                   Worker 0:  Sort Method: quicksort  Memory: 541kB
+                                                   Worker 1:  Sort Method: quicksort  Memory: 542kB
+                                                   ->  Parallel Seq Scan on store_sales  (cost=0.00..87803.12 rows=14610 width=6) (actual time=0.028..154.455 rows=10253 loops=3)
+                                                         Filter: ((ss_quantity >= 0) AND (ss_quantity <= 5) AND (((ss_list_price >= '107'::numeric) AND (ss_list_price <= '117'::numeric)) OR ((ss_coupon_amt >= '1319'::numeric) AND (ss_coupon_amt <= '2319'::numeric)) OR ((ss_wholesale_cost >= '60'::numeric) AND (ss_wholesale_cost <= '80'::numeric))))
+                                                         Rows Removed by Filter: 949881
+                                 ->  Aggregate  (cost=94525.97..94525.98 rows=1 width=48) (actual time=163.151..163.160 rows=1 loops=1)
+                                       ->  Gather Merge  (cost=89888.63..94245.41 rows=37408 width=6) (actual time=155.654..160.237 rows=37062 loops=1)
+                                             Workers Planned: 2
+                                             Workers Launched: 2
+                                             ->  Sort  (cost=88888.61..88927.58 rows=15587 width=6) (actual time=154.207..154.481 rows=12354 loops=3)
+                                                   Sort Key: store_sales_1.ss_list_price
+                                                   Sort Method: quicksort  Memory: 581kB
+                                                   Worker 0:  Sort Method: quicksort  Memory: 573kB
+                                                   Worker 1:  Sort Method: quicksort  Memory: 573kB
+                                                   ->  Parallel Seq Scan on store_sales store_sales_1  (cost=0.00..87803.12 rows=15587 width=6) (actual time=0.030..152.243 rows=12354 loops=3)
+                                                         Filter: ((ss_quantity >= 6) AND (ss_quantity <= 10) AND (((ss_list_price >= '23'::numeric) AND (ss_list_price <= '33'::numeric)) OR ((ss_coupon_amt >= '825'::numeric) AND (ss_coupon_amt <= '1825'::numeric)) OR ((ss_wholesale_cost >= '43'::numeric) AND (ss_wholesale_cost <= '63'::numeric))))
+                                                         Rows Removed by Filter: 947781
+                           ->  Aggregate  (cost=94114.12..94114.13 rows=1 width=48) (actual time=160.065..160.073 rows=1 loops=1)
+                                 ->  Gather Merge  (cost=89804.30..93853.38 rows=34766 width=6) (actual time=153.636..157.558 rows=32718 loops=1)
+                                       Workers Planned: 2
+                                       Workers Launched: 2
+                                       ->  Sort  (cost=88804.28..88840.49 rows=14486 width=6) (actual time=152.202..152.440 rows=10906 loops=3)
+                                             Sort Key: store_sales_2.ss_list_price
+                                             Sort Method: quicksort  Memory: 554kB
+                                             Worker 0:  Sort Method: quicksort  Memory: 553kB
+                                             Worker 1:  Sort Method: quicksort  Memory: 553kB
+                                             ->  Parallel Seq Scan on store_sales store_sales_2  (cost=0.00..87803.12 rows=14486 width=6) (actual time=0.031..150.480 rows=10906 loops=3)
+                                                   Filter: ((ss_quantity >= 11) AND (ss_quantity <= 15) AND (((ss_list_price >= '74'::numeric) AND (ss_list_price <= '84'::numeric)) OR ((ss_coupon_amt >= '4381'::numeric) AND (ss_coupon_amt <= '5381'::numeric)) OR ((ss_wholesale_cost >= '57'::numeric) AND (ss_wholesale_cost <= '77'::numeric))))
+                                                   Rows Removed by Filter: 949229
+                     ->  Aggregate  (cost=93992.98..93992.99 rows=1 width=48) (actual time=161.296..161.309 rows=1 loops=1)
+                           ->  Gather Merge  (cost=89779.60..93738.06 rows=33988 width=6) (actual time=154.686..158.760 rows=33270 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Sort  (cost=88779.58..88814.98 rows=14162 width=6) (actual time=153.217..153.459 rows=11090 loops=3)
+                                       Sort Key: store_sales_3.ss_list_price
+                                       Sort Method: quicksort  Memory: 557kB
+                                       Worker 0:  Sort Method: quicksort  Memory: 555kB
+                                       Worker 1:  Sort Method: quicksort  Memory: 556kB
+                                       ->  Parallel Seq Scan on store_sales store_sales_3  (cost=0.00..87803.12 rows=14162 width=6) (actual time=0.036..151.434 rows=11090 loops=3)
+                                             Filter: ((ss_quantity >= 16) AND (ss_quantity <= 20) AND (((ss_list_price >= '89'::numeric) AND (ss_list_price <= '99'::numeric)) OR ((ss_coupon_amt >= '3117'::numeric) AND (ss_coupon_amt <= '4117'::numeric)) OR ((ss_wholesale_cost >= '68'::numeric) AND (ss_wholesale_cost <= '88'::numeric))))
+                                             Rows Removed by Filter: 949045
+               ->  Aggregate  (cost=93836.65..93836.66 rows=1 width=48) (actual time=163.846..163.854 rows=1 loops=1)
+                     ->  Gather Merge  (cost=89747.73..93589.26 rows=32984 width=6) (actual time=157.787..161.478 rows=30945 loops=1)
+                           Workers Planned: 2
+                           Workers Launched: 2
+                           ->  Sort  (cost=88747.71..88782.07 rows=13743 width=6) (actual time=156.248..156.473 rows=10315 loops=3)
+                                 Sort Key: store_sales_4.ss_list_price
+                                 Sort Method: quicksort  Memory: 547kB
+                                 Worker 0:  Sort Method: quicksort  Memory: 544kB
+                                 Worker 1:  Sort Method: quicksort  Memory: 541kB
+                                 ->  Parallel Seq Scan on store_sales store_sales_4  (cost=0.00..87803.12 rows=13743 width=6) (actual time=0.032..154.510 rows=10315 loops=3)
+                                       Filter: ((ss_quantity >= 21) AND (ss_quantity <= 25) AND (((ss_list_price >= '58'::numeric) AND (ss_list_price <= '68'::numeric)) OR ((ss_coupon_amt >= '9402'::numeric) AND (ss_coupon_amt <= '10402'::numeric)) OR ((ss_wholesale_cost >= '38'::numeric) AND (ss_wholesale_cost <= '58'::numeric))))
+                                       Rows Removed by Filter: 949820
+         ->  Aggregate  (cost=94037.50..94037.51 rows=1 width=48) (actual time=162.327..162.337 rows=1 loops=1)
+               ->  Gather Merge  (cost=89788.67..93780.44 rows=34274 width=6) (actual time=154.907..159.535 rows=36525 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     ->  Sort  (cost=88788.64..88824.35 rows=14281 width=6) (actual time=153.425..153.696 rows=12175 loops=3)
+                           Sort Key: store_sales_5.ss_list_price
+                           Sort Method: quicksort  Memory: 577kB
+                           Worker 0:  Sort Method: quicksort  Memory: 571kB
+                           Worker 1:  Sort Method: quicksort  Memory: 572kB
+                           ->  Parallel Seq Scan on store_sales store_sales_5  (cost=0.00..87803.12 rows=14281 width=6) (actual time=0.041..151.486 rows=12175 loops=3)
+                                 Filter: ((ss_quantity >= 26) AND (ss_quantity <= 30) AND (((ss_list_price >= '64'::numeric) AND (ss_list_price <= '74'::numeric)) OR ((ss_coupon_amt >= '5792'::numeric) AND (ss_coupon_amt <= '6792'::numeric)) OR ((ss_wholesale_cost >= '73'::numeric) AND (ss_wholesale_cost <= '93'::numeric))))
+                                 Rows Removed by Filter: 947960
+ Planning Time: 0.897 ms
+ Execution Time: 975.019 ms
+(80 rows)
+

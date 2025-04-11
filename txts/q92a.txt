@@ -1,0 +1,47 @@
+                                                                                   QUERY PLAN                                                                                   
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=27275.70..27275.71 rows=1 width=32) (actual time=43.980..45.024 rows=1 loops=1)
+   ->  Sort  (cost=27275.70..27275.71 rows=1 width=32) (actual time=43.980..45.023 rows=1 loops=1)
+         Sort Key: (sum(web_sales.ws_ext_discount_amt))
+         Sort Method: quicksort  Memory: 25kB
+         ->  Aggregate  (cost=27275.68..27275.69 rows=1 width=32) (actual time=43.969..45.012 rows=1 loops=1)
+               ->  Hash Join  (cost=4578.40..27275.68 rows=1 width=6) (actual time=43.966..45.009 rows=0 loops=1)
+                     Hash Cond: (web_sales.ws_item_sk = item.i_item_sk)
+                     Join Filter: (web_sales.ws_ext_discount_amt > (SubPlan 1))
+                     Rows Removed by Join Filter: 1
+                     ->  Gather  (cost=3069.20..25764.20 rows=867 width=10) (actual time=3.562..39.419 rows=20500 loops=1)
+                           Workers Planned: 2
+                           Workers Launched: 2
+                           ->  Parallel Hash Join  (cost=2069.20..24677.50 rows=361 width=10) (actual time=2.033..36.934 rows=6833 loops=3)
+                                 Hash Cond: (web_sales.ws_sold_date_sk = date_dim.d_date_sk)
+                                 ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=14) (actual time=0.031..23.352 rows=239795 loops=3)
+                                 ->  Parallel Hash  (cost=2068.55..2068.55 rows=52 width=4) (actual time=1.885..1.886 rows=30 loops=3)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                       ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=52 width=4) (actual time=0.754..1.837 rows=30 loops=3)
+                                             Filter: ((d_date >= '2000-02-01'::date) AND (d_date <= '2000-05-01'::date))
+                                             Rows Removed by Filter: 24319
+                     ->  Hash  (cost=1509.00..1509.00 rows=16 width=4) (actual time=4.441..4.441 rows=4 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           ->  Seq Scan on item  (cost=0.00..1509.00 rows=16 width=4) (actual time=0.771..4.431 rows=4 loops=1)
+                                 Filter: (i_manufact_id = 714)
+                                 Rows Removed by Filter: 17996
+                     SubPlan 1
+                       ->  Aggregate  (cost=518.12..518.14 rows=1 width=32) (actual time=0.272..0.273 rows=1 loops=1)
+                             ->  Nested Loop  (cost=5.07..518.12 rows=1 width=6) (actual time=0.144..0.264 rows=1 loops=1)
+                                   ->  Bitmap Heap Scan on web_sales web_sales_1  (cost=4.77..174.93 rows=44 width=10) (actual time=0.025..0.189 rows=46 loops=1)
+                                         Recheck Cond: (ws_item_sk = item.i_item_sk)
+                                         Heap Blocks: exact=46
+                                         ->  Bitmap Index Scan on web_sales_pkey  (cost=0.00..4.75 rows=44 width=0) (actual time=0.015..0.015 rows=46 loops=1)
+                                               Index Cond: (ws_item_sk = item.i_item_sk)
+                                   ->  Memoize  (cost=0.30..7.96 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=46)
+                                         Cache Key: web_sales_1.ws_sold_date_sk
+                                         Cache Mode: logical
+                                         Hits: 1  Misses: 45  Evictions: 0  Overflows: 0  Memory Usage: 4kB
+                                         ->  Index Scan using date_dim_pkey on date_dim date_dim_1  (cost=0.29..7.95 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=45)
+                                               Index Cond: (d_date_sk = web_sales_1.ws_sold_date_sk)
+                                               Filter: ((d_date >= '2000-02-01'::date) AND (d_date <= '2000-05-01'::date))
+                                               Rows Removed by Filter: 1
+ Planning Time: 1.081 ms
+ Execution Time: 45.094 ms
+(43 rows)
+

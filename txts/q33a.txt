@@ -1,0 +1,116 @@
+                                                                                                        QUERY PLAN                                                                                                         
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=148891.36..148891.61 rows=100 width=36) (actual time=272.777..272.873 rows=100 loops=1)
+   ->  Sort  (cost=148891.36..148891.86 rows=200 width=36) (actual time=272.774..272.865 rows=100 loops=1)
+         Sort Key: (sum((sum(store_sales.ss_ext_sales_price))))
+         Sort Method: top-N heapsort  Memory: 31kB
+         ->  GroupAggregate  (cost=148854.10..148883.72 rows=200 width=36) (actual time=270.592..272.666 rows=698 loops=1)
+               Group Key: item.i_manufact_id
+               ->  Merge Append  (cost=148854.10..148877.64 rows=715 width=36) (actual time=270.582..272.425 rows=1982 loops=1)
+                     Sort Key: item.i_manufact_id
+                     ->  GroupAggregate  (cost=71806.66..71814.52 rows=393 width=36) (actual time=139.903..140.760 rows=688 loops=1)
+                           Group Key: item.i_manufact_id
+                           ->  Sort  (cost=71806.66..71807.65 rows=393 width=10) (actual time=139.887..140.134 rows=8444 loops=1)
+                                 Sort Key: item.i_manufact_id
+                                 Sort Method: quicksort  Memory: 713kB
+                                 ->  Hash Join  (cost=4601.47..71789.73 rows=393 width=10) (actual time=8.657..138.974 rows=8444 loops=1)
+                                       Hash Cond: (item.i_manufact_id = item_1.i_manufact_id)
+                                       ->  Gather  (cost=3069.35..70252.20 rows=394 width=10) (actual time=3.787..133.053 rows=9728 loops=1)
+                                             Workers Planned: 2
+                                             Workers Launched: 2
+                                             ->  Nested Loop  (cost=2069.35..69212.80 rows=164 width=10) (actual time=2.283..132.071 rows=3243 loops=3)
+                                                   ->  Nested Loop  (cost=2069.07..69162.48 rows=164 width=10) (actual time=2.258..126.124 rows=3243 loops=3)
+                                                         ->  Parallel Hash Join  (cost=2068.78..69015.64 rows=471 width=14) (actual time=2.215..118.181 rows=8367 loops=3)
+                                                               Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=18) (actual time=0.047..76.467 rows=960135 loops=3)
+                                                               ->  Parallel Hash  (cost=2068.55..2068.55 rows=18 width=4) (actual time=1.971..1.972 rows=10 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                                                     ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=18 width=4) (actual time=1.292..1.956 rows=10 loops=3)
+                                                                           Filter: ((d_year = 2001) AND (d_moy = 3))
+                                                                           Rows Removed by Filter: 24339
+                                                         ->  Index Scan using customer_address_pkey on customer_address  (cost=0.29..0.31 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=25100)
+                                                               Index Cond: (ca_address_sk = store_sales.ss_addr_sk)
+                                                               Filter: (ca_gmt_offset = '-5'::numeric)
+                                                               Rows Removed by Filter: 1
+                                                   ->  Index Scan using item_pkey on item  (cost=0.29..0.31 rows=1 width=8) (actual time=0.002..0.002 rows=1 loops=9728)
+                                                         Index Cond: (i_item_sk = store_sales.ss_item_sk)
+                                       ->  Hash  (cost=1521.68..1521.68 rows=835 width=4) (actual time=4.863..4.864 rows=703 loops=1)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 33kB
+                                             ->  HashAggregate  (cost=1513.33..1521.68 rows=835 width=4) (actual time=4.798..4.827 rows=704 loops=1)
+                                                   Group Key: item_1.i_manufact_id
+                                                   Batches: 1  Memory Usage: 73kB
+                                                   ->  Seq Scan on item item_1  (cost=0.00..1509.00 rows=1733 width=4) (actual time=0.018..4.604 rows=1733 loops=1)
+                                                         Filter: (i_category = 'Books'::bpchar)
+                                                         Rows Removed by Filter: 16267
+                     ->  GroupAggregate  (cost=49769.22..49773.50 rows=214 width=36) (actual time=83.697..84.207 rows=676 loops=1)
+                           Group Key: item_2.i_manufact_id
+                           ->  Sort  (cost=49769.22..49769.76 rows=214 width=10) (actual time=83.689..83.814 rows=4351 loops=1)
+                                 Sort Key: item_2.i_manufact_id
+                                 Sort Method: quicksort  Memory: 362kB
+                                 ->  Hash Join  (cost=4601.47..49760.94 rows=214 width=10) (actual time=48.983..83.222 rows=4351 loops=1)
+                                       Hash Cond: (item_2.i_manufact_id = item_3.i_manufact_id)
+                                       ->  Gather  (cost=3069.35..48225.88 rows=214 width=10) (actual time=45.121..78.932 rows=5050 loops=1)
+                                             Workers Planned: 2
+                                             Workers Launched: 2
+                                             ->  Nested Loop  (cost=2069.35..47204.48 rows=89 width=10) (actual time=43.461..77.509 rows=1683 loops=3)
+                                                   ->  Nested Loop  (cost=2069.07..47177.00 rows=89 width=10) (actual time=43.449..74.786 rows=1683 loops=3)
+                                                         ->  Parallel Hash Join  (cost=2068.78..47100.19 rows=245 width=14) (actual time=43.383..69.951 rows=4554 loops=3)
+                                                               Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                                               ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=600659 width=18) (actual time=0.040..46.364 rows=480516 loops=3)
+                                                               ->  Parallel Hash  (cost=2068.55..2068.55 rows=18 width=4) (actual time=1.783..1.783 rows=10 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                                                     ->  Parallel Seq Scan on date_dim date_dim_1  (cost=0.00..2068.55 rows=18 width=4) (actual time=1.124..1.755 rows=10 loops=3)
+                                                                           Filter: ((d_year = 2001) AND (d_moy = 3))
+                                                                           Rows Removed by Filter: 24339
+                                                         ->  Index Scan using customer_address_pkey on customer_address customer_address_1  (cost=0.29..0.31 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=13661)
+                                                               Index Cond: (ca_address_sk = catalog_sales.cs_bill_addr_sk)
+                                                               Filter: (ca_gmt_offset = '-5'::numeric)
+                                                               Rows Removed by Filter: 1
+                                                   ->  Index Scan using item_pkey on item item_2  (cost=0.29..0.31 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=5050)
+                                                         Index Cond: (i_item_sk = catalog_sales.cs_item_sk)
+                                       ->  Hash  (cost=1521.68..1521.68 rows=835 width=4) (actual time=3.846..3.846 rows=703 loops=1)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 33kB
+                                             ->  HashAggregate  (cost=1513.33..1521.68 rows=835 width=4) (actual time=3.779..3.809 rows=704 loops=1)
+                                                   Group Key: item_3.i_manufact_id
+                                                   Batches: 1  Memory Usage: 73kB
+                                                   ->  Seq Scan on item item_3  (cost=0.00..1509.00 rows=1733 width=4) (actual time=0.017..3.632 rows=1733 loops=1)
+                                                         Filter: (i_category = 'Books'::bpchar)
+                                                         Rows Removed by Filter: 16267
+                     ->  GroupAggregate  (cost=27278.19..27280.35 rows=108 width=36) (actual time=46.981..47.353 rows=618 loops=1)
+                           Group Key: item_4.i_manufact_id
+                           ->  Sort  (cost=27278.19..27278.46 rows=108 width=10) (actual time=46.971..47.083 rows=2402 loops=1)
+                                 Sort Key: item_4.i_manufact_id
+                                 Sort Method: quicksort  Memory: 190kB
+                                 ->  Hash Join  (cost=4601.47..27274.54 rows=108 width=10) (actual time=8.837..46.685 rows=2402 loops=1)
+                                       Hash Cond: (item_4.i_manufact_id = item_5.i_manufact_id)
+                                       ->  Gather  (cost=3069.35..25740.94 rows=108 width=10) (actual time=4.836..42.377 rows=2790 loops=1)
+                                             Workers Planned: 2
+                                             Workers Launched: 2
+                                             ->  Nested Loop  (cost=2069.35..24730.14 rows=45 width=10) (actual time=2.531..40.971 rows=930 loops=3)
+                                                   ->  Nested Loop  (cost=2069.07..24716.08 rows=45 width=10) (actual time=2.518..38.949 rows=930 loops=3)
+                                                         ->  Parallel Hash Join  (cost=2068.78..24677.08 rows=123 width=14) (actual time=2.104..36.515 rows=2379 loops=3)
+                                                               Hash Cond: (web_sales.ws_sold_date_sk = date_dim_2.d_date_sk)
+                                                               ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=18) (actual time=0.029..24.405 rows=239795 loops=3)
+                                                               ->  Parallel Hash  (cost=2068.55..2068.55 rows=18 width=4) (actual time=1.768..1.768 rows=10 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 72kB
+                                                                     ->  Parallel Seq Scan on date_dim date_dim_2  (cost=0.00..2068.55 rows=18 width=4) (actual time=1.116..1.746 rows=10 loops=3)
+                                                                           Filter: ((d_year = 2001) AND (d_moy = 3))
+                                                                           Rows Removed by Filter: 24339
+                                                         ->  Index Scan using customer_address_pkey on customer_address customer_address_2  (cost=0.29..0.32 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=7136)
+                                                               Index Cond: (ca_address_sk = web_sales.ws_bill_addr_sk)
+                                                               Filter: (ca_gmt_offset = '-5'::numeric)
+                                                               Rows Removed by Filter: 1
+                                                   ->  Index Scan using item_pkey on item item_4  (cost=0.29..0.31 rows=1 width=8) (actual time=0.002..0.002 rows=1 loops=2790)
+                                                         Index Cond: (i_item_sk = web_sales.ws_item_sk)
+                                       ->  Hash  (cost=1521.68..1521.68 rows=835 width=4) (actual time=3.993..3.993 rows=703 loops=1)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 33kB
+                                             ->  HashAggregate  (cost=1513.33..1521.68 rows=835 width=4) (actual time=3.932..3.963 rows=704 loops=1)
+                                                   Group Key: item_5.i_manufact_id
+                                                   Batches: 1  Memory Usage: 73kB
+                                                   ->  Seq Scan on item item_5  (cost=0.00..1509.00 rows=1733 width=4) (actual time=0.018..3.769 rows=1733 loops=1)
+                                                         Filter: (i_category = 'Books'::bpchar)
+                                                         Rows Removed by Filter: 16267
+ Planning Time: 3.583 ms
+ Execution Time: 273.069 ms
+(112 rows)
+

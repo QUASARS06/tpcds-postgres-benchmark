@@ -1,0 +1,79 @@
+                                                                                                      QUERY PLAN                                                                                                       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=150671.47..150671.48 rows=1 width=8) (actual time=1002.783..1002.872 rows=1 loops=1)
+   ->  Subquery Scan on cool_cust  (cost=72057.87..150645.36 rows=10444 width=0) (actual time=998.553..1001.847 rows=47049 loops=1)
+         ->  HashSetOp Except  (cost=72057.87..150540.92 rows=10444 width=216) (actual time=998.552..999.674 rows=47049 loops=1)
+               ->  Append  (cost=72057.87..150441.17 rows=13300 width=216) (actual time=864.839..989.884 rows=58861 loops=1)
+                     ->  Result  (cost=72057.87..123758.82 rows=10444 width=216) (actual time=864.838..869.741 rows=47117 loops=1)
+                           ->  HashSetOp Except  (cost=72057.87..123654.38 rows=10444 width=216) (actual time=864.837..867.354 rows=47117 loops=1)
+                                 ->  Append  (cost=72057.87..123533.52 rows=16114 width=216) (actual time=392.256..848.594 rows=79108 loops=1)
+                                       ->  Subquery Scan on "*SELECT* 1"  (cost=72057.87..73498.36 rows=10444 width=60) (actual time=392.251..454.058 rows=47428 loops=1)
+                                             ->  Unique  (cost=72057.87..73393.92 rows=10444 width=56) (actual time=392.250..451.576 rows=47428 loops=1)
+                                                   ->  Gather Merge  (cost=72057.87..73315.59 rows=10444 width=56) (actual time=392.249..448.734 rows=48100 loops=1)
+                                                         Workers Planned: 2
+                                                         Workers Launched: 2
+                                                         ->  Unique  (cost=71057.85..71110.07 rows=5222 width=56) (actual time=389.174..435.606 rows=16033 loops=3)
+                                                               ->  Sort  (cost=71057.85..71070.90 rows=5222 width=56) (actual time=389.173..419.072 rows=179233 loops=3)
+                                                                     Sort Key: customer.c_last_name, customer.c_first_name, date_dim.d_date
+                                                                     Sort Method: external merge  Disk: 11264kB
+                                                                     Worker 0:  Sort Method: external merge  Disk: 11200kB
+                                                                     Worker 1:  Sort Method: external merge  Disk: 11432kB
+                                                                     ->  Nested Loop  (cost=2071.41..70735.38 rows=5222 width=56) (actual time=2.229..300.139 rows=179233 loops=3)
+                                                                           ->  Parallel Hash Join  (cost=2071.11..69017.97 rows=5463 width=8) (actual time=2.183..132.358 rows=183547 loops=3)
+                                                                                 Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                                                 ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=8) (actual time=0.039..75.047 rows=960135 loops=3)
+                                                                                 ->  Parallel Hash  (cost=2068.55..2068.55 rows=205 width=8) (actual time=2.074..2.075 rows=122 loops=3)
+                                                                                       Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                                                       ->  Parallel Seq Scan on date_dim  (cost=0.00..2068.55 rows=205 width=8) (actual time=0.920..2.034 rows=122 loops=3)
+                                                                                             Filter: ((d_month_seq >= 1202) AND (d_month_seq <= 1213))
+                                                                                             Rows Removed by Filter: 24228
+                                                                           ->  Index Scan using customer_pkey on customer  (cost=0.29..0.31 rows=1 width=56) (actual time=0.001..0.001 rows=1 loops=550641)
+                                                                                 Index Cond: (c_customer_sk = store_sales.ss_customer_sk)
+                                       ->  Subquery Scan on "*SELECT* 2"  (cost=49172.56..49954.59 rows=5670 width=60) (actual time=357.661..391.670 rows=31680 loops=1)
+                                             ->  Unique  (cost=49172.56..49897.89 rows=5670 width=56) (actual time=357.660..390.013 rows=31680 loops=1)
+                                                   ->  Gather Merge  (cost=49172.56..49855.37 rows=5670 width=56) (actual time=357.658..388.108 rows=31952 loops=1)
+                                                         Workers Planned: 2
+                                                         Workers Launched: 2
+                                                         ->  Unique  (cost=48172.54..48200.89 rows=2835 width=56) (actual time=355.093..378.166 rows=10651 loops=3)
+                                                               ->  Sort  (cost=48172.54..48179.62 rows=2835 width=56) (actual time=355.093..369.284 rows=95325 loops=3)
+                                                                     Sort Key: customer_1.c_last_name, customer_1.c_first_name, date_dim_1.d_date
+                                                                     Sort Method: external merge  Disk: 6184kB
+                                                                     Worker 0:  Sort Method: external merge  Disk: 5888kB
+                                                                     Worker 1:  Sort Method: external merge  Disk: 5936kB
+                                                                     ->  Nested Loop  (cost=2071.41..48009.96 rows=2835 width=56) (actual time=168.956..309.514 rows=95325 loops=3)
+                                                                           ->  Parallel Hash Join  (cost=2071.11..47102.52 rows=2847 width=8) (actual time=168.927..216.889 rows=95547 loops=3)
+                                                                                 Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                                                                 ->  Parallel Seq Scan on catalog_sales  (cost=0.00..43454.59 rows=600659 width=8) (actual time=0.450..187.703 rows=480516 loops=3)
+                                                                                 ->  Parallel Hash  (cost=2068.55..2068.55 rows=205 width=8) (actual time=1.728..1.728 rows=122 loops=3)
+                                                                                       Buckets: 1024  Batches: 1  Memory Usage: 40kB
+                                                                                       ->  Parallel Seq Scan on date_dim date_dim_1  (cost=0.00..2068.55 rows=205 width=8) (actual time=1.312..1.686 rows=122 loops=3)
+                                                                                             Filter: ((d_month_seq >= 1202) AND (d_month_seq <= 1213))
+                                                                                             Rows Removed by Filter: 24228
+                                                                           ->  Index Scan using customer_pkey on customer customer_1  (cost=0.29..0.32 rows=1 width=56) (actual time=0.001..0.001 rows=1 loops=286642)
+                                                                                 Index Cond: (c_customer_sk = catalog_sales.cs_bill_customer_sk)
+                     ->  Subquery Scan on "*SELECT* 3"  (cost=26221.94..26615.85 rows=2856 width=60) (actual time=105.876..118.058 rows=11744 loops=1)
+                           ->  Unique  (cost=26221.94..26587.29 rows=2856 width=56) (actual time=105.875..117.453 rows=11744 loops=1)
+                                 ->  Gather Merge  (cost=26221.94..26565.87 rows=2856 width=56) (actual time=105.875..116.732 rows=12023 loops=1)
+                                       Workers Planned: 2
+                                       Workers Launched: 2
+                                       ->  Unique  (cost=25221.92..25236.20 rows=1428 width=56) (actual time=103.604..111.783 rows=4008 loops=3)
+                                             ->  Sort  (cost=25221.92..25225.49 rows=1428 width=56) (actual time=103.604..107.448 rows=47217 loops=3)
+                                                   Sort Key: customer_2.c_last_name, customer_2.c_first_name, date_dim_2.d_date
+                                                   Sort Method: external merge  Disk: 3032kB
+                                                   Worker 0:  Sort Method: external merge  Disk: 2984kB
+                                                   Worker 1:  Sort Method: external merge  Disk: 2912kB
+                                                   ->  Nested Loop  (cost=2071.41..25147.09 rows=1428 width=56) (actual time=1.774..79.693 rows=47217 loops=3)
+                                                         ->  Parallel Hash Join  (cost=2071.11..24679.42 rows=1428 width=8) (actual time=1.755..37.044 rows=47222 loops=3)
+                                                               Hash Cond: (web_sales.ws_sold_date_sk = date_dim_2.d_date_sk)
+                                                               ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=8) (actual time=0.039..19.393 rows=239795 loops=3)
+                                                               ->  Parallel Hash  (cost=2068.55..2068.55 rows=205 width=8) (actual time=1.660..1.661 rows=122 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 40kB
+                                                                     ->  Parallel Seq Scan on date_dim date_dim_2  (cost=0.00..2068.55 rows=205 width=8) (actual time=1.257..1.642 rows=122 loops=3)
+                                                                           Filter: ((d_month_seq >= 1202) AND (d_month_seq <= 1213))
+                                                                           Rows Removed by Filter: 24228
+                                                         ->  Index Scan using customer_pkey on customer customer_2  (cost=0.29..0.33 rows=1 width=56) (actual time=0.001..0.001 rows=1 loops=141665)
+                                                               Index Cond: (c_customer_sk = web_sales.ws_bill_customer_sk)
+ Planning Time: 2.999 ms
+ Execution Time: 1007.838 ms
+(75 rows)
+

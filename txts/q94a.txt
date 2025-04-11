@@ -1,0 +1,46 @@
+                                                                                         QUERY PLAN                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=31286.25..31286.26 rows=1 width=72) (actual time=78.186..78.232 rows=1 loops=1)
+   ->  Sort  (cost=31286.25..31286.26 rows=1 width=72) (actual time=78.185..78.231 rows=1 loops=1)
+         Sort Key: (count(DISTINCT ws1.ws_order_number))
+         Sort Method: quicksort  Memory: 25kB
+         ->  Aggregate  (cost=31286.23..31286.24 rows=1 width=72) (actual time=78.179..78.225 rows=1 loops=1)
+               ->  Sort  (cost=31286.22..31286.22 rows=1 width=16) (actual time=78.167..78.214 rows=11 loops=1)
+                     Sort Key: ws1.ws_order_number
+                     Sort Method: quicksort  Memory: 25kB
+                     ->  Nested Loop Semi Join  (cost=2515.74..31286.21 rows=1 width=16) (actual time=42.989..78.201 rows=11 loops=1)
+                           ->  Gather  (cost=2515.32..25890.10 rows=1 width=20) (actual time=40.863..61.486 rows=11 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Nested Loop Anti Join  (cost=1515.32..24890.00 rows=1 width=20) (actual time=44.164..66.265 rows=4 loops=3)
+                                       ->  Nested Loop  (cost=1515.03..24525.27 rows=1 width=20) (actual time=17.584..53.432 rows=11 loops=3)
+                                             ->  Hash Join  (cost=1514.73..24144.19 rows=1176 width=24) (actual time=12.164..52.483 rows=725 loops=3)
+                                                   Hash Cond: (ws1.ws_web_site_sk = web_site.web_site_sk)
+                                                   ->  Parallel Hash Join  (cost=1512.30..24120.62 rows=7055 width=28) (actual time=11.984..51.999 rows=5549 loops=3)
+                                                         Hash Cond: (ws1.ws_ship_addr_sk = customer_address.ca_address_sk)
+                                                         ->  Parallel Seq Scan on web_sales ws1  (cost=0.00..21821.43 rows=299743 width=32) (actual time=0.064..22.311 rows=239795 loops=3)
+                                                         ->  Parallel Hash  (cost=1503.65..1503.65 rows=692 width=4) (actual time=11.819..11.819 rows=400 loops=3)
+                                                               Buckets: 2048  Batches: 1  Memory Usage: 112kB
+                                                               ->  Parallel Seq Scan on customer_address  (cost=0.00..1503.65 rows=692 width=4) (actual time=0.160..11.709 rows=400 loops=3)
+                                                                     Filter: (ca_state = 'OK'::bpchar)
+                                                                     Rows Removed by Filter: 16267
+                                                   ->  Hash  (cost=2.38..2.38 rows=5 width=4) (actual time=0.102..0.102 rows=5 loops=3)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                         ->  Seq Scan on web_site  (cost=0.00..2.38 rows=5 width=4) (actual time=0.091..0.097 rows=5 loops=3)
+                                                               Filter: (web_company_name = 'pri'::bpchar)
+                                                               Rows Removed by Filter: 25
+                                             ->  Index Scan using date_dim_pkey on date_dim  (cost=0.29..0.32 rows=1 width=4) (actual time=0.001..0.001 rows=0 loops=2175)
+                                                   Index Cond: (d_date_sk = ws1.ws_ship_date_sk)
+                                                   Filter: ((d_date >= '2002-05-01'::date) AND (d_date <= '2002-06-30'::date))
+                                                   Rows Removed by Filter: 1
+                                       ->  Index Only Scan using web_returns_pkey on web_returns wr1  (cost=0.29..538.54 rows=2 width=4) (actual time=1.166..1.166 rows=1 loops=33)
+                                             Index Cond: (wr_order_number = ws1.ws_order_number)
+                                             Heap Fetches: 0
+                           ->  Index Scan using web_sales_pkey on web_sales ws2  (cost=0.42..5396.09 rows=10 width=8) (actual time=1.519..1.519 rows=1 loops=11)
+                                 Index Cond: (ws_order_number = ws1.ws_order_number)
+                                 Filter: (ws1.ws_warehouse_sk <> ws_warehouse_sk)
+                                 Rows Removed by Filter: 0
+ Planning Time: 2.305 ms
+ Execution Time: 78.286 ms
+(42 rows)
+

@@ -1,0 +1,62 @@
+                                                                             QUERY PLAN                                                                              
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=249229.50..249229.51 rows=1 width=250) (actual time=554.615..554.806 rows=100 loops=1)
+   CTE wss
+     ->  Finalize GroupAggregate  (cost=219883.71..241193.62 rows=62520 width=232) (actual time=432.450..441.499 rows=1834 loops=1)
+           Group Key: date_dim.d_week_seq, store_sales.ss_store_sk
+           ->  Gather Merge  (cost=219883.71..234472.72 rows=125040 width=232) (actual time=432.439..433.333 rows=5502 loops=1)
+                 Workers Planned: 2
+                 Workers Launched: 2
+                 ->  Sort  (cost=218883.68..219039.98 rows=62520 width=232) (actual time=430.586..430.636 rows=1834 loops=3)
+                       Sort Key: date_dim.d_week_seq, store_sales.ss_store_sk
+                       Sort Method: quicksort  Memory: 924kB
+                       Worker 0:  Sort Method: quicksort  Memory: 924kB
+                       Worker 1:  Sort Method: quicksort  Memory: 924kB
+                       ->  Partial HashAggregate  (cost=191905.57..207064.33 rows=62520 width=232) (actual time=428.801..430.111 rows=1834 loops=3)
+                             Group Key: date_dim.d_week_seq, store_sales.ss_store_sk
+                             Planned Partitions: 16  Batches: 1  Memory Usage: 4561kB
+                             Worker 0:  Batches: 1  Memory Usage: 4561kB
+                             Worker 1:  Batches: 1  Memory Usage: 4561kB
+                             ->  Parallel Hash Join  (cost=2390.83..69337.69 rows=1146834 width=24) (actual time=5.988..213.575 rows=916770 loops=3)
+                                   Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                   ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=14) (actual time=0.040..73.450 rows=960135 loops=3)
+                                   ->  Parallel Hash  (cost=1853.70..1853.70 rows=42970 width=18) (actual time=5.874..5.875 rows=24350 loops=3)
+                                         Buckets: 131072  Batches: 1  Memory Usage: 5088kB
+                                         ->  Parallel Seq Scan on date_dim  (cost=0.00..1853.70 rows=42970 width=18) (actual time=0.003..2.643 rows=24350 loops=3)
+   ->  Sort  (cost=8035.88..8035.88 rows=1 width=250) (actual time=554.614..554.619 rows=100 loops=1)
+         Sort Key: store.s_store_name, store.s_store_id, wss.d_week_seq
+         Sort Method: top-N heapsort  Memory: 67kB
+         ->  Nested Loop  (cost=3990.07..8035.87 rows=1 width=250) (actual time=450.312..552.338 rows=15288 loops=1)
+               Join Filter: (wss_1.d_week_seq = d_1.d_week_seq)
+               Rows Removed by Join Filter: 786252
+               ->  Seq Scan on date_dim d_1  (cost=0.00..2519.73 rows=348 width=4) (actual time=2.765..5.143 rows=365 loops=1)
+                     Filter: ((d_month_seq >= 1207) AND (d_month_seq <= 1218))
+                     Rows Removed by Filter: 72684
+               ->  Materialize  (cost=3990.07..5469.16 rows=9 width=478) (actual time=1.226..1.276 rows=2196 loops=365)
+                     ->  Hash Join  (cost=3990.07..5469.11 rows=9 width=478) (actual time=447.528..447.979 rows=2196 loops=1)
+                           Hash Cond: (((wss_1.d_week_seq - 52) = d.d_week_seq) AND (store_1.s_store_id = store.s_store_id))
+                           ->  Hash Join  (cost=1.27..1419.27 rows=3751 width=245) (actual time=432.499..432.771 rows=1572 loops=1)
+                                 Hash Cond: (wss_1.ss_store_sk = store_1.s_store_sk)
+                                 ->  CTE Scan on wss wss_1  (cost=0.00..1250.40 rows=62520 width=232) (actual time=432.451..432.511 rows=1834 loops=1)
+                                 ->  Hash  (cost=1.12..1.12 rows=12 width=21) (actual time=0.033..0.033 rows=12 loops=1)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       ->  Seq Scan on store store_1  (cost=0.00..1.12 rows=12 width=21) (actual time=0.021..0.021 rows=12 loops=1)
+                           ->  Hash  (cost=3986.90..3986.90 rows=127 width=254) (actual time=14.814..14.815 rows=2196 loops=1)
+                                 Buckets: 4096 (originally 1024)  Batches: 1 (originally 1)  Memory Usage: 284kB
+                                 ->  Hash Join  (cost=2525.43..3986.90 rows=127 width=254) (actual time=7.647..14.415 rows=2196 loops=1)
+                                       Hash Cond: (wss.d_week_seq = d.d_week_seq)
+                                       ->  Hash Join  (cost=1.27..1419.27 rows=3751 width=250) (actual time=0.011..9.583 rows=1572 loops=1)
+                                             Hash Cond: (wss.ss_store_sk = store.s_store_sk)
+                                             ->  CTE Scan on wss  (cost=0.00..1250.40 rows=62520 width=232) (actual time=0.000..9.333 rows=1834 loops=1)
+                                             ->  Hash  (cost=1.12..1.12 rows=12 width=26) (actual time=0.006..0.006 rows=12 loops=1)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                   ->  Seq Scan on store  (cost=0.00..1.12 rows=12 width=26) (actual time=0.001..0.002 rows=12 loops=1)
+                                       ->  Hash  (cost=2519.73..2519.73 rows=354 width=4) (actual time=4.614..4.614 rows=366 loops=1)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 21kB
+                                             ->  Seq Scan on date_dim d  (cost=0.00..2519.73 rows=354 width=4) (actual time=1.922..4.598 rows=366 loops=1)
+                                                   Filter: ((d_month_seq >= 1195) AND (d_month_seq <= 1206))
+                                                   Rows Removed by Filter: 72683
+ Planning Time: 2.024 ms
+ Execution Time: 555.015 ms
+(58 rows)
+

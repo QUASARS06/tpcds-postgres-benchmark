@@ -1,0 +1,72 @@
+                                                                                                                                                                                                                                                       QUERY PLAN                                                                                                                                                                                                                                                       
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=658085.61..658085.62 rows=1 width=210) (actual time=6447.469..6447.474 rows=43 loops=1)
+   Sort Key: ((ss3.store_sales / ss2.store_sales))
+   Sort Method: quicksort  Memory: 29kB
+   CTE ss
+     ->  HashAggregate  (cost=323447.05..377956.54 rows=1484184 width=54) (actual time=1283.231..1400.503 rows=35136 loops=1)
+           Group Key: customer_address.ca_county, date_dim.d_qoy, date_dim.d_year
+           Planned Partitions: 64  Batches: 65  Memory Usage: 8209kB  Disk Usage: 60432kB
+           ->  Hash Join  (cost=5328.60..100717.91 rows=2630012 width=28) (actual time=18.117..851.688 rows=2685273 loops=1)
+                 Hash Cond: (store_sales.ss_addr_sk = customer_address.ca_address_sk)
+                 ->  Hash Join  (cost=3067.60..91231.26 rows=2752402 width=18) (actual time=10.149..582.408 rows=2750311 loops=1)
+                       Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                       ->  Seq Scan on store_sales  (cost=0.00..80600.90 rows=2880890 width=14) (actual time=0.020..165.996 rows=2880404 loops=1)
+                       ->  Hash  (cost=2154.49..2154.49 rows=73049 width=12) (actual time=10.028..10.028 rows=73049 loops=1)
+                             Buckets: 131072  Batches: 1  Memory Usage: 4163kB
+                             ->  Seq Scan on date_dim  (cost=0.00..2154.49 rows=73049 width=12) (actual time=0.004..5.671 rows=73049 loops=1)
+                 ->  Hash  (cost=1636.00..1636.00 rows=50000 width=18) (actual time=7.909..7.910 rows=50000 loops=1)
+                       Buckets: 65536  Batches: 1  Memory Usage: 3052kB
+                       ->  Seq Scan on customer_address  (cost=0.00..1636.00 rows=50000 width=18) (actual time=0.012..4.351 rows=50000 loops=1)
+   CTE ws
+     ->  HashAggregate  (cost=96035.96..114860.44 rows=719264 width=54) (actual time=368.597..389.732 rows=23320 loops=1)
+           Group Key: customer_address_1.ca_county, date_dim_1.d_qoy, date_dim_1.d_year
+           Planned Partitions: 32  Batches: 33  Memory Usage: 8209kB  Disk Usage: 6096kB
+           ->  Hash Join  (cost=5328.60..35123.29 rows=719264 width=28) (actual time=20.513..261.326 rows=719118 loops=1)
+                 Hash Cond: (web_sales.ws_bill_addr_sk = customer_address_1.ca_address_sk)
+                 ->  Hash Join  (cost=3067.60..30973.94 rows=719312 width=18) (actual time=11.835..183.410 rows=719195 loops=1)
+                       Hash Cond: (web_sales.ws_sold_date_sk = date_dim_1.d_date_sk)
+                       ->  Seq Scan on web_sales  (cost=0.00..26017.84 rows=719384 width=14) (actual time=0.011..50.893 rows=719384 loops=1)
+                       ->  Hash  (cost=2154.49..2154.49 rows=73049 width=12) (actual time=11.736..11.736 rows=73049 loops=1)
+                             Buckets: 131072  Batches: 1  Memory Usage: 4163kB
+                             ->  Seq Scan on date_dim date_dim_1  (cost=0.00..2154.49 rows=73049 width=12) (actual time=0.005..6.803 rows=73049 loops=1)
+                 ->  Hash  (cost=1636.00..1636.00 rows=50000 width=18) (actual time=8.629..8.629 rows=50000 loops=1)
+                       Buckets: 65536  Batches: 1  Memory Usage: 3052kB
+                       ->  Seq Scan on customer_address customer_address_1  (cost=0.00..1636.00 rows=50000 width=18) (actual time=0.010..5.291 rows=50000 loops=1)
+   ->  Nested Loop  (cost=0.00..165268.61 rows=1 width=210) (actual time=1954.419..6447.363 rows=43 loops=1)
+         Join Filter: (((ss1.ca_county)::text = (ws2.ca_county)::text) AND (CASE WHEN (ws1.web_sales > '0'::numeric) THEN (ws2.web_sales / ws1.web_sales) ELSE NULL::numeric END > CASE WHEN (ss1.store_sales > '0'::numeric) THEN (ss2.store_sales / ss1.store_sales) ELSE NULL::numeric END) AND (CASE WHEN (ws2.web_sales > '0'::numeric) THEN (ws3.web_sales / ws2.web_sales) ELSE NULL::numeric END > CASE WHEN (ss2.store_sales > '0'::numeric) THEN (ss3.store_sales / ss2.store_sales) ELSE NULL::numeric END))
+         Rows Removed by Join Filter: 527207
+         ->  Nested Loop  (cost=0.00..147286.33 rows=1 width=554) (actual time=1715.054..5833.599 rows=570 loops=1)
+               Join Filter: ((ss1.ca_county)::text = (ss3.ca_county)::text)
+               Rows Removed by Join Filter: 1038674
+               ->  Nested Loop  (cost=0.00..110181.27 rows=1 width=444) (actual time=1714.451..4801.485 rows=578 loops=1)
+                     Join Filter: ((ss1.ca_county)::text = (ss2.ca_county)::text)
+                     Rows Removed by Join Filter: 1008217
+                     ->  Nested Loop  (cost=0.00..73076.21 rows=1 width=334) (actual time=1678.622..3757.677 rows=617 loops=1)
+                           Join Filter: ((ss1.ca_county)::text = (ws1.ca_county)::text)
+                           Rows Removed by Join Filter: 1089697
+                           ->  Nested Loop  (cost=0.00..35970.31 rows=2 width=220) (actual time=395.288..1380.878 rows=662 loops=1)
+                                 Join Filter: ((ws1.ca_county)::text = (ws3.ca_county)::text)
+                                 Rows Removed by Join Filter: 1148109
+                                 ->  CTE Scan on ws ws1  (cost=0.00..17981.60 rows=18 width=110) (actual time=368.608..369.692 rows=911 loops=1)
+                                       Filter: ((d_qoy = 1) AND (d_year = 1999))
+                                       Rows Removed by Filter: 22409
+                                 ->  CTE Scan on ws ws3  (cost=0.00..17981.60 rows=18 width=110) (actual time=0.001..1.076 rows=1261 loops=911)
+                                       Filter: ((d_year = 1999) AND (d_qoy = 3))
+                                       Rows Removed by Filter: 22059
+                           ->  CTE Scan on ss ss1  (cost=0.00..37104.60 rows=37 width=114) (actual time=1.939..3.547 rows=1647 loops=662)
+                                 Filter: ((d_qoy = 1) AND (d_year = 1999))
+                                 Rows Removed by Filter: 33489
+                     ->  CTE Scan on ss ss2  (cost=0.00..37104.60 rows=37 width=110) (actual time=0.001..1.647 rows=1635 loops=617)
+                           Filter: ((d_year = 1999) AND (d_qoy = 2))
+                           Rows Removed by Filter: 33501
+               ->  CTE Scan on ss ss3  (cost=0.00..37104.60 rows=37 width=110) (actual time=0.002..1.738 rows=1798 loops=578)
+                     Filter: ((d_year = 1999) AND (d_qoy = 3))
+                     Rows Removed by Filter: 33338
+         ->  CTE Scan on ws ws2  (cost=0.00..17981.60 rows=18 width=110) (actual time=0.003..1.043 rows=925 loops=570)
+               Filter: ((d_year = 1999) AND (d_qoy = 2))
+               Rows Removed by Filter: 22395
+ Planning Time: 2.362 ms
+ Execution Time: 6458.179 ms
+(68 rows)
+

@@ -1,0 +1,53 @@
+                                                                                                                                                                                                                                                                                                 QUERY PLAN                                                                                                                                                                                                                                                                                                  
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=14359.86..14359.88 rows=7 width=68) (actual time=192.203..192.227 rows=100 loops=1)
+   ->  Sort  (cost=14359.86..14359.88 rows=7 width=68) (actual time=192.203..192.223 rows=100 loops=1)
+         Sort Key: tmp1.avg_quarterly_sales, tmp1.sum_sales, tmp1.i_manufact_id
+         Sort Method: top-N heapsort  Memory: 37kB
+         ->  Subquery Scan on tmp1  (cost=14356.97..14359.76 rows=7 width=68) (actual time=188.578..191.934 rows=1491 loops=1)
+               Filter: (CASE WHEN (tmp1.avg_quarterly_sales > '0'::numeric) THEN (abs((tmp1.sum_sales - tmp1.avg_quarterly_sales)) / tmp1.avg_quarterly_sales) ELSE NULL::numeric END > 0.1)
+               Rows Removed by Filter: 197
+               ->  WindowAgg  (cost=14356.97..14359.29 rows=21 width=72) (actual time=188.576..191.622 rows=1688 loops=1)
+                     ->  Finalize GroupAggregate  (cost=14356.97..14358.98 rows=21 width=40) (actual time=188.563..191.131 rows=1688 loops=1)
+                           Group Key: item.i_manufact_id, date_dim.d_qoy
+                           ->  Gather Merge  (cost=14356.97..14358.59 rows=12 width=40) (actual time=188.557..190.486 rows=2000 loops=1)
+                                 Workers Planned: 1
+                                 Workers Launched: 1
+                                 ->  Partial GroupAggregate  (cost=13356.96..13357.23 rows=12 width=40) (actual time=186.956..188.704 rows=1000 loops=2)
+                                       Group Key: item.i_manufact_id, date_dim.d_qoy
+                                       ->  Sort  (cost=13356.96..13356.99 rows=12 width=14) (actual time=186.945..187.339 rows=18469 loops=2)
+                                             Sort Key: item.i_manufact_id, date_dim.d_qoy
+                                             Sort Method: quicksort  Memory: 1489kB
+                                             Worker 0:  Sort Method: quicksort  Memory: 1487kB
+                                             ->  Nested Loop  (cost=6.25..13356.75 rows=12 width=14) (actual time=0.256..184.498 rows=18469 loops=2)
+                                                   ->  Nested Loop  (cost=6.10..13355.45 rows=13 width=18) (actual time=0.243..181.228 rows=18930 loops=2)
+                                                         ->  Nested Loop  (cost=5.77..12654.04 rows=2730 width=18) (actual time=0.044..167.740 rows=60073 loops=2)
+                                                               ->  Parallel Seq Scan on item  (cost=0.00..1681.06 rows=17 width=8) (actual time=0.008..5.371 rows=467 loops=2)
+                                                                     Filter: (((i_category = ANY ('{Books,Children,Electronics}'::bpchar[])) AND (i_class = ANY ('{personal,portable,reference,self-help}'::bpchar[])) AND (i_brand = ANY ('{"scholaramalgamalg #14","scholaramalgamalg #7","exportiunivamalg #9","scholaramalgamalg #9"}'::bpchar[]))) OR ((i_category = ANY ('{Women,Music,Men}'::bpchar[])) AND (i_class = ANY ('{accessories,classical,fragrances,pants}'::bpchar[])) AND (i_brand = ANY ('{"amalgimporto #1","edu packscholar #1","exportiimporto #1","importoamalg #1"}'::bpchar[]))))
+                                                                     Rows Removed by Filter: 8533
+                                                               ->  Bitmap Heap Scan on store_sales  (cost=5.77..643.74 rows=173 width=18) (actual time=0.025..0.335 rows=129 loops=934)
+                                                                     Recheck Cond: (item.i_item_sk = ss_item_sk)
+                                                                     Heap Blocks: exact=59854
+                                                                     ->  Bitmap Index Scan on store_sales_pkey  (cost=0.00..5.73 rows=173 width=0) (actual time=0.015..0.015 rows=129 loops=934)
+                                                                           Index Cond: (ss_item_sk = item.i_item_sk)
+                                                         ->  Memoize  (cost=0.33..0.36 rows=1 width=8) (actual time=0.000..0.000 rows=0 loops=120146)
+                                                               Cache Key: store_sales.ss_sold_date_sk
+                                                               Cache Mode: logical
+                                                               Hits: 58342  Misses: 1567  Evictions: 0  Overflows: 0  Memory Usage: 119kB
+                                                               Worker 0:  Hits: 58685  Misses: 1552  Evictions: 0  Overflows: 0  Memory Usage: 118kB
+                                                               ->  Index Scan using date_dim_pkey on date_dim  (cost=0.32..0.35 rows=1 width=8) (actual time=0.001..0.001 rows=0 loops=3119)
+                                                                     Index Cond: (d_date_sk = store_sales.ss_sold_date_sk)
+                                                                     Filter: (d_month_seq = ANY ('{1186,1187,1188,1189,1190,1191,1192,1193,1194,1195,1196,1197}'::integer[]))
+                                                                     Rows Removed by Filter: 1
+                                                   ->  Memoize  (cost=0.15..0.16 rows=1 width=4) (actual time=0.000..0.000 rows=1 loops=37860)
+                                                         Cache Key: store_sales.ss_store_sk
+                                                         Cache Mode: logical
+                                                         Hits: 18938  Misses: 7  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                         Worker 0:  Hits: 18908  Misses: 7  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                                         ->  Index Only Scan using store_pkey on store  (cost=0.14..0.15 rows=1 width=4) (actual time=0.002..0.002 rows=1 loops=14)
+                                                               Index Cond: (s_store_sk = store_sales.ss_store_sk)
+                                                               Heap Fetches: 0
+ Planning Time: 0.820 ms
+ Execution Time: 192.303 ms
+(49 rows)
+

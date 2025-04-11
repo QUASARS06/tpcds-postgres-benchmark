@@ -1,0 +1,37 @@
+                                                                                                                                                                                                                                                                                                                                                                                                                                          QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=70297.91..70502.71 rows=8 width=246) (actual time=301.376..301.435 rows=6 loops=1)
+   ->  Incremental Sort  (cost=70297.91..70502.71 rows=8 width=246) (actual time=301.375..301.434 rows=6 loops=1)
+         Sort Key: store.s_store_name, store.s_store_id, (sum(CASE WHEN (date_dim.d_day_name = 'Sunday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Monday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Tuesday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Wednesday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Thursday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Friday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Saturday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END))
+         Presorted Key: store.s_store_name, store.s_store_id
+         Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 25kB  Peak Memory: 25kB
+         ->  Finalize GroupAggregate  (cost=70268.69..70502.35 rows=8 width=246) (actual time=264.834..301.424 rows=6 loops=1)
+               Group Key: store.s_store_name, store.s_store_id
+               ->  Gather Merge  (cost=70268.69..70501.49 rows=16 width=246) (actual time=255.520..301.385 rows=18 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     ->  Partial GroupAggregate  (cost=69268.67..69499.62 rows=8 width=246) (actual time=206.924..253.553 rows=6 loops=3)
+                           Group Key: store.s_store_name, store.s_store_id
+                           ->  Sort  (cost=69268.67..69282.24 rows=5429 width=38) (actual time=197.829..215.245 rows=180251 loops=3)
+                                 Sort Key: store.s_store_name, store.s_store_id
+                                 Sort Method: external merge  Disk: 8512kB
+                                 Worker 0:  Sort Method: external merge  Disk: 8600kB
+                                 Worker 1:  Sort Method: external merge  Disk: 8760kB
+                                 ->  Hash Join  (cost=1965.09..68931.89 rows=5429 width=38) (actual time=2.257..155.143 rows=180251 loops=3)
+                                       Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                       ->  Parallel Hash Join  (cost=1963.79..68910.65 rows=5683 width=20) (actual time=2.215..139.467 rows=184620 loops=3)
+                                             Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                             ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=14) (actual time=0.040..76.584 rows=960135 loops=3)
+                                             ->  Parallel Hash  (cost=1961.12..1961.12 rows=213 width=14) (actual time=2.136..2.136 rows=122 loops=3)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                   ->  Parallel Seq Scan on date_dim  (cost=0.00..1961.12 rows=213 width=14) (actual time=0.933..2.085 rows=122 loops=3)
+                                                         Filter: (d_year = 2000)
+                                                         Rows Removed by Filter: 24228
+                                       ->  Hash  (cost=1.15..1.15 rows=12 width=26) (actual time=0.029..0.029 rows=12 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                             ->  Seq Scan on store  (cost=0.00..1.15 rows=12 width=26) (actual time=0.022..0.025 rows=12 loops=3)
+                                                   Filter: (s_gmt_offset = '-5'::numeric)
+ Planning Time: 0.563 ms
+ Execution Time: 304.094 ms
+(33 rows)
+

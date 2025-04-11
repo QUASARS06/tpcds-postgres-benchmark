@@ -1,0 +1,47 @@
+                                                                                                                                          QUERY PLAN                                                                                                                                           
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=70593.80..70593.84 rows=18 width=77) (actual time=127.392..128.036 rows=3 loops=1)
+   Sort Key: (count(*)) DESC, customer.c_last_name
+   Sort Method: quicksort  Memory: 25kB
+   ->  Nested Loop  (cost=70423.12..70593.42 rows=18 width=77) (actual time=127.138..128.025 rows=3 loops=1)
+         ->  Finalize GroupAggregate  (cost=70422.83..70443.66 rows=18 width=16) (actual time=126.864..127.966 rows=66 loops=1)
+               Group Key: store_sales.ss_ticket_number, store_sales.ss_customer_sk
+               Filter: ((count(*) >= 1) AND (count(*) <= 5))
+               Rows Removed by Filter: 1003
+               ->  Gather Merge  (cost=70422.83..70440.14 rows=138 width=16) (actual time=126.858..127.850 rows=1077 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     ->  Partial GroupAggregate  (cost=69422.81..69424.19 rows=69 width=16) (actual time=124.873..125.116 rows=359 loops=3)
+                           Group Key: store_sales.ss_ticket_number, store_sales.ss_customer_sk
+                           ->  Sort  (cost=69422.81..69422.98 rows=69 width=8) (actual time=124.868..124.949 rows=3689 loops=3)
+                                 Sort Key: store_sales.ss_ticket_number, store_sales.ss_customer_sk
+                                 Sort Method: quicksort  Memory: 213kB
+                                 Worker 0:  Sort Method: quicksort  Memory: 209kB
+                                 Worker 1:  Sort Method: quicksort  Memory: 213kB
+                                 ->  Hash Join  (cost=2470.66..69420.70 rows=69 width=8) (actual time=4.103..124.400 rows=3689 loops=3)
+                                       Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                       ->  Hash Join  (cost=2469.33..69419.11 rows=72 width=12) (actual time=4.054..124.034 rows=3738 loops=3)
+                                             Hash Cond: (store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk)
+                                             ->  Parallel Hash Join  (cost=2230.21..69177.07 rows=1115 width=16) (actual time=3.030..120.831 rows=36347 loops=3)
+                                                   Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                   ->  Parallel Seq Scan on store_sales  (cost=0.00..63795.71 rows=1200371 width=20) (actual time=0.033..75.752 rows=960135 loops=3)
+                                                   ->  Parallel Hash  (cost=2229.69..2229.69 rows=42 width=4) (actual time=2.923..2.923 rows=24 loops=3)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                         ->  Parallel Seq Scan on date_dim  (cost=0.00..2229.69 rows=42 width=4) (actual time=1.777..2.883 rows=24 loops=3)
+                                                               Filter: ((d_dom >= 1) AND (d_dom <= 2) AND (d_year = ANY ('{2000,2001,2002}'::integer[])))
+                                                               Rows Removed by Filter: 24326
+                                             ->  Hash  (cost=233.00..233.00 rows=489 width=4) (actual time=0.979..0.980 rows=800 loops=3)
+                                                   Buckets: 1024  Batches: 1  Memory Usage: 37kB
+                                                   ->  Seq Scan on household_demographics  (cost=0.00..233.00 rows=489 width=4) (actual time=0.282..0.944 rows=800 loops=3)
+                                                         Filter: ((hd_vehicle_count > 0) AND ((hd_buy_potential = '1001-5000'::bpchar) OR (hd_buy_potential = '5001-10000'::bpchar)) AND (CASE WHEN (hd_vehicle_count > 0) THEN (hd_dep_count / hd_vehicle_count) ELSE NULL::integer END > 1))
+                                                         Rows Removed by Filter: 6400
+                                       ->  Hash  (cost=1.18..1.18 rows=12 width=4) (actual time=0.037..0.037 rows=12 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                             ->  Seq Scan on store  (cost=0.00..1.18 rows=12 width=4) (actual time=0.027..0.029 rows=12 loops=3)
+                                                   Filter: ((s_county)::text = ANY ('{"Williamson County","Williamson County","Williamson County","Williamson County"}'::text[]))
+         ->  Index Scan using customer_pkey on customer  (cost=0.29..8.31 rows=1 width=69) (actual time=0.001..0.001 rows=0 loops=66)
+               Index Cond: (c_customer_sk = store_sales.ss_customer_sk)
+ Planning Time: 2.056 ms
+ Execution Time: 128.098 ms
+(43 rows)
+

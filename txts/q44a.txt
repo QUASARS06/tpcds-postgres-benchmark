@@ -1,0 +1,87 @@
+                                                                                                 QUERY PLAN                                                                                                 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=286405.47..286406.99 rows=100 width=110) (actual time=537.046..537.103 rows=10 loops=1)
+   ->  Merge Join  (cost=286405.47..288740.89 rows=153846 width=110) (actual time=537.046..537.102 rows=10 loops=1)
+         Merge Cond: ((rank() OVER (?)) = (rank() OVER (?)))
+         ->  Sort  (cost=143202.73..143216.60 rows=5547 width=59) (actual time=272.744..272.781 rows=10 loops=1)
+               Sort Key: (rank() OVER (?))
+               Sort Method: quicksort  Memory: 25kB
+               ->  Hash Join  (cost=142690.68..142857.78 rows=5547 width=59) (actual time=272.726..272.775 rows=10 loops=1)
+                     Hash Cond: (v1.item_sk = i1.i_item_sk)
+                     ->  WindowAgg  (cost=141001.68..141098.75 rows=5547 width=44) (actual time=266.557..266.599 rows=10 loops=1)
+                           Run Condition: (rank() OVER (?) < 11)
+                           ->  Sort  (cost=141001.68..141015.54 rows=5547 width=36) (actual time=266.548..266.586 rows=11 loops=1)
+                                 Sort Key: v1.rank_col
+                                 Sort Method: quicksort  Memory: 760kB
+                                 ->  Subquery Scan on v1  (cost=140365.52..140656.72 rows=5547 width=36) (actual time=257.301..265.299 rows=8421 loops=1)
+                                       ->  Finalize HashAggregate  (cost=140365.52..140656.72 rows=5547 width=36) (actual time=257.300..264.911 rows=8421 loops=1)
+                                             Group Key: ss1.ss_item_sk
+                                             Filter: (avg(ss1.ss_net_profit) > (0.9 * $1))
+                                             Batches: 5  Memory Usage: 9009kB  Disk Usage: 200kB
+                                             Rows Removed by Filter: 9578
+                                             InitPlan 1 (returns $1)
+                                               ->  Finalize GroupAggregate  (cost=1000.00..67818.39 rows=1 width=36) (actual time=96.465..96.490 rows=1 loops=1)
+                                                     ->  Gather  (cost=1000.00..67818.37 rows=2 width=36) (actual time=96.407..96.481 rows=3 loops=1)
+                                                           Workers Planned: 2
+                                                           Workers Launched: 2
+                                                           ->  Partial GroupAggregate  (cost=0.00..66818.17 rows=1 width=36) (actual time=94.848..94.848 rows=1 loops=3)
+                                                                 ->  Parallel Seq Scan on store_sales  (cost=0.00..66796.64 rows=8607 width=10) (actual time=0.053..94.372 rows=3592 loops=3)
+                                                                       Filter: ((ss_hdemo_sk IS NULL) AND (ss_store_sk = 4))
+                                                                       Rows Removed by Filter: 956543
+                                             ->  Gather  (cost=68761.54..72297.54 rows=33280 width=36) (actual time=134.613..140.866 rows=53685 loops=1)
+                                                   Workers Planned: 2
+                                                   Workers Launched: 2
+                                                   ->  Partial HashAggregate  (cost=67761.54..67969.54 rows=16640 width=36) (actual time=132.969..137.811 rows=17895 loops=3)
+                                                         Group Key: ss1.ss_item_sk
+                                                         Batches: 1  Memory Usage: 7441kB
+                                                         Worker 0:  Batches: 1  Memory Usage: 7441kB
+                                                         Worker 1:  Batches: 1  Memory Usage: 7441kB
+                                                         ->  Parallel Seq Scan on store_sales ss1  (cost=0.00..66796.64 rows=192980 width=10) (actual time=0.032..94.046 rows=152757 loops=3)
+                                                               Filter: (ss_store_sk = 4)
+                                                               Rows Removed by Filter: 807377
+                     ->  Hash  (cost=1464.00..1464.00 rows=18000 width=55) (actual time=6.139..6.139 rows=18000 loops=1)
+                           Buckets: 32768  Batches: 1  Memory Usage: 1802kB
+                           ->  Seq Scan on item i1  (cost=0.00..1464.00 rows=18000 width=55) (actual time=0.004..4.727 rows=18000 loops=1)
+         ->  Sort  (cost=143202.73..143216.60 rows=5547 width=59) (actual time=264.299..264.317 rows=10 loops=1)
+               Sort Key: (rank() OVER (?))
+               Sort Method: quicksort  Memory: 25kB
+               ->  Hash Join  (cost=142690.68..142857.78 rows=5547 width=59) (actual time=264.276..264.302 rows=10 loops=1)
+                     Hash Cond: (v2.item_sk = i2.i_item_sk)
+                     ->  WindowAgg  (cost=141001.68..141098.75 rows=5547 width=44) (actual time=259.715..259.737 rows=10 loops=1)
+                           Run Condition: (rank() OVER (?) < 11)
+                           ->  Sort  (cost=141001.68..141015.54 rows=5547 width=36) (actual time=259.709..259.727 rows=11 loops=1)
+                                 Sort Key: v2.rank_col DESC
+                                 Sort Method: quicksort  Memory: 760kB
+                                 ->  Subquery Scan on v2  (cost=140365.52..140656.72 rows=5547 width=36) (actual time=251.600..258.355 rows=8421 loops=1)
+                                       ->  Finalize HashAggregate  (cost=140365.52..140656.72 rows=5547 width=36) (actual time=251.599..258.003 rows=8421 loops=1)
+                                             Group Key: ss1_1.ss_item_sk
+                                             Filter: (avg(ss1_1.ss_net_profit) > (0.9 * $3))
+                                             Batches: 5  Memory Usage: 9009kB  Disk Usage: 200kB
+                                             Rows Removed by Filter: 9578
+                                             InitPlan 2 (returns $3)
+                                               ->  Finalize GroupAggregate  (cost=1000.00..67818.39 rows=1 width=36) (actual time=97.241..97.247 rows=1 loops=1)
+                                                     ->  Gather  (cost=1000.00..67818.37 rows=2 width=36) (actual time=97.173..97.239 rows=3 loops=1)
+                                                           Workers Planned: 2
+                                                           Workers Launched: 2
+                                                           ->  Partial GroupAggregate  (cost=0.00..66818.17 rows=1 width=36) (actual time=95.658..95.658 rows=1 loops=3)
+                                                                 ->  Parallel Seq Scan on store_sales store_sales_1  (cost=0.00..66796.64 rows=8607 width=10) (actual time=0.054..95.168 rows=3592 loops=3)
+                                                                       Filter: ((ss_hdemo_sk IS NULL) AND (ss_store_sk = 4))
+                                                                       Rows Removed by Filter: 956543
+                                             ->  Gather  (cost=68761.54..72297.54 rows=33280 width=36) (actual time=129.895..136.911 rows=53643 loops=1)
+                                                   Workers Planned: 2
+                                                   Workers Launched: 2
+                                                   ->  Partial HashAggregate  (cost=67761.54..67969.54 rows=16640 width=36) (actual time=128.212..133.047 rows=17881 loops=3)
+                                                         Group Key: ss1_1.ss_item_sk
+                                                         Batches: 1  Memory Usage: 7441kB
+                                                         Worker 0:  Batches: 1  Memory Usage: 7441kB
+                                                         Worker 1:  Batches: 1  Memory Usage: 7441kB
+                                                         ->  Parallel Seq Scan on store_sales ss1_1  (cost=0.00..66796.64 rows=192980 width=10) (actual time=0.031..91.573 rows=152757 loops=3)
+                                                               Filter: (ss_store_sk = 4)
+                                                               Rows Removed by Filter: 807377
+                     ->  Hash  (cost=1464.00..1464.00 rows=18000 width=55) (actual time=4.519..4.519 rows=18000 loops=1)
+                           Buckets: 32768  Batches: 1  Memory Usage: 1802kB
+                           ->  Seq Scan on item i2  (cost=0.00..1464.00 rows=18000 width=55) (actual time=0.008..3.466 rows=18000 loops=1)
+ Planning Time: 0.548 ms
+ Execution Time: 539.674 ms
+(83 rows)
+

@@ -1,0 +1,51 @@
+                                                                                          QUERY PLAN                                                                                           
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=9771.48..9773.53 rows=1 width=153) (actual time=792.273..792.357 rows=1 loops=1)
+   ->  GroupAggregate  (cost=9771.48..9773.53 rows=1 width=153) (actual time=792.270..792.354 rows=1 loops=1)
+         Group Key: item.i_item_id, item.i_item_desc, store.s_store_id, store.s_store_name
+         ->  Nested Loop  (cost=9771.48..9773.50 rows=1 width=153) (actual time=500.963..792.347 rows=1 loops=1)
+               ->  Nested Loop  (cost=9771.19..9773.19 rows=1 width=157) (actual time=500.935..792.319 rows=1 loops=1)
+                     ->  Nested Loop  (cost=9770.89..9772.87 rows=1 width=161) (actual time=76.161..791.145 rows=9 loops=1)
+                           Join Filter: (catalog_sales.cs_item_sk = item.i_item_sk)
+                           ->  Gather Merge  (cost=9770.47..9770.59 rows=1 width=173) (actual time=48.212..50.504 rows=6109 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 ->  Sort  (cost=8770.44..8770.45 rows=1 width=173) (actual time=46.150..46.317 rows=2036 loops=3)
+                                       Sort Key: item.i_item_id, item.i_item_desc, store.s_store_id, store.s_store_name
+                                       Sort Method: quicksort  Memory: 436kB
+                                       Worker 0:  Sort Method: quicksort  Memory: 503kB
+                                       Worker 1:  Sort Method: quicksort  Memory: 500kB
+                                       ->  Nested Loop  (cost=2177.71..8770.43 rows=1 width=173) (actual time=4.444..45.215 rows=2036 loops=3)
+                                             ->  Nested Loop  (cost=2177.43..8770.13 rows=1 width=50) (actual time=4.399..39.491 rows=2036 loops=3)
+                                                   ->  Nested Loop  (cost=2177.29..8769.97 rows=1 width=32) (actual time=4.387..37.982 rows=2084 loops=3)
+                                                         ->  Parallel Hash Join  (cost=2176.86..8513.33 rows=192 width=16) (actual time=4.315..15.947 rows=2832 loops=3)
+                                                               Hash Cond: (store_returns.sr_returned_date_sk = d2.d_date_sk)
+                                                               ->  Parallel Seq Scan on store_returns  (cost=0.00..6021.98 rows=119798 width=20) (actual time=0.035..7.185 rows=95838 loops=3)
+                                                               ->  Parallel Hash  (cost=2175.97..2175.97 rows=71 width=4) (actual time=4.191..4.192 rows=41 loops=3)
+                                                                     Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                                     ->  Parallel Seq Scan on date_dim d2  (cost=0.00..2175.97 rows=71 width=4) (actual time=1.836..4.127 rows=41 loops=3)
+                                                                           Filter: ((d_moy >= 4) AND (d_moy <= 7) AND (d_year = 1998))
+                                                                           Rows Removed by Filter: 24309
+                                                         ->  Index Scan using store_sales_pkey on store_sales  (cost=0.43..1.33 rows=1 width=24) (actual time=0.008..0.008 rows=1 loops=8497)
+                                                               Index Cond: ((ss_item_sk = store_returns.sr_item_sk) AND (ss_ticket_number = store_returns.sr_ticket_number))
+                                                               Filter: (store_returns.sr_customer_sk = ss_customer_sk)
+                                                               Rows Removed by Filter: 0
+                                                   ->  Index Scan using store_pkey on store  (cost=0.14..0.15 rows=1 width=26) (actual time=0.000..0.000 rows=1 loops=6252)
+                                                         Index Cond: (s_store_sk = store_sales.ss_store_sk)
+                                             ->  Index Scan using item_pkey on item  (cost=0.29..0.31 rows=1 width=123) (actual time=0.003..0.003 rows=1 loops=6109)
+                                                   Index Cond: (i_item_sk = store_sales.ss_item_sk)
+                           ->  Index Scan using catalog_sales_pkey on catalog_sales  (cost=0.43..2.27 rows=1 width=16) (actual time=0.121..0.121 rows=0 loops=6109)
+                                 Index Cond: (cs_item_sk = store_sales.ss_item_sk)
+                                 Filter: (cs_bill_customer_sk = store_sales.ss_customer_sk)
+                                 Rows Removed by Filter: 107
+                     ->  Index Scan using date_dim_pkey on date_dim d1  (cost=0.29..0.32 rows=1 width=4) (actual time=0.129..0.129 rows=0 loops=9)
+                           Index Cond: (d_date_sk = store_sales.ss_sold_date_sk)
+                           Filter: ((d_moy = 4) AND (d_year = 1998))
+                           Rows Removed by Filter: 1
+               ->  Index Scan using date_dim_pkey on date_dim d3  (cost=0.29..0.32 rows=1 width=4) (actual time=0.027..0.027 rows=1 loops=1)
+                     Index Cond: (d_date_sk = catalog_sales.cs_sold_date_sk)
+                     Filter: (d_year = ANY ('{1998,1999,2000}'::integer[]))
+ Planning Time: 10.694 ms
+ Execution Time: 792.469 ms
+(47 rows)
+

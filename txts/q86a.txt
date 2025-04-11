@@ -1,0 +1,34 @@
+                                                                                                     QUERY PLAN                                                                                                     
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=26711.75..26712.00 rows=100 width=178) (actual time=167.121..168.237 rows=100 loops=1)
+   ->  Sort  (cost=26711.75..26714.25 rows=1001 width=178) (actual time=167.121..168.232 rows=100 loops=1)
+         Sort Key: sub.lochierarchy DESC, (CASE WHEN (sub.lochierarchy = 0) THEN sub.i_category ELSE NULL::bpchar END), sub.rank_within_parent
+         Sort Method: quicksort  Memory: 56kB
+         ->  Subquery Scan on sub  (cost=26625.95..26673.49 rows=1001 width=178) (actual time=166.880..168.047 rows=136 loops=1)
+               ->  WindowAgg  (cost=26625.95..26660.98 rows=1001 width=178) (actual time=166.880..168.039 rows=136 loops=1)
+                     ->  Sort  (cost=26625.95..26628.45 rows=1001 width=170) (actual time=166.874..167.986 rows=136 loops=1)
+                           Sort Key: ((GROUPING(item.i_category) + GROUPING(item.i_class))), (CASE WHEN (GROUPING(item.i_class) = 0) THEN item.i_category ELSE NULL::bpchar END), (sum(web_sales.ws_net_paid)) DESC
+                           Sort Method: quicksort  Memory: 47kB
+                           ->  MixedAggregate  (cost=3071.49..26576.06 rows=1001 width=170) (actual time=166.709..167.847 rows=136 loops=1)
+                                 Hash Key: item.i_category, item.i_class
+                                 Hash Key: item.i_category
+                                 Group Key: ()
+                                 Batches: 1  Memory Usage: 137kB
+                                 ->  Gather  (cost=3071.49..26497.71 rows=3555 width=108) (actual time=4.918..105.640 rows=143527 loops=1)
+                                       Workers Planned: 2
+                                       Workers Launched: 2
+                                       ->  Nested Loop  (cost=2071.49..25142.21 rows=1481 width=108) (actual time=3.238..138.821 rows=47842 loops=3)
+                                             ->  Parallel Hash Join  (cost=2071.20..24679.50 rows=1481 width=10) (actual time=2.982..51.296 rows=47842 loops=3)
+                                                   Hash Cond: (web_sales.ws_sold_date_sk = d1.d_date_sk)
+                                                   ->  Parallel Seq Scan on web_sales  (cost=0.00..21821.43 rows=299743 width=14) (actual time=0.045..27.521 rows=239795 loops=3)
+                                                   ->  Parallel Hash  (cost=2068.55..2068.55 rows=212 width=4) (actual time=2.875..2.875 rows=122 loops=3)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 104kB
+                                                         ->  Parallel Seq Scan on date_dim d1  (cost=0.00..2068.55 rows=212 width=4) (actual time=0.949..2.837 rows=122 loops=3)
+                                                               Filter: ((d_month_seq >= 1186) AND (d_month_seq <= 1197))
+                                                               Rows Removed by Filter: 24228
+                                             ->  Index Scan using item_pkey on item  (cost=0.29..0.31 rows=1 width=106) (actual time=0.002..0.002 rows=1 loops=143527)
+                                                   Index Cond: (i_item_sk = web_sales.ws_item_sk)
+ Planning Time: 0.954 ms
+ Execution Time: 168.315 ms
+(30 rows)
+
