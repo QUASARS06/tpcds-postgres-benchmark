@@ -16,4 +16,4 @@ Most of the bash and python scripts mentioned above are copied over from - https
 7. python3 /proj/tpcds-postgres/split_sqls.py
 8. python3 /proj/tpcds-postgres/split_analyzing_sqls.py
 9. bash /proj/tpcds-postgres/get_analyzed_txts.sh (this will take very long to run)
-10. python3 /proj/tpcds-postgres/run_tpcds_visual_analysis.py
+10. python3 /proj/tpcds-postgres/run_tpcds_visual_analysis.py (the pdf and png of plot will be stored at /proj)
