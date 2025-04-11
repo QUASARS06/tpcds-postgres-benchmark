@@ -19,6 +19,8 @@ RUN apt-get update && \
 # Set working directory
 WORKDIR /proj
 
+COPY run_benchmark.sh .
+
 # Clone the TPC-DS benchmark wrapper repo
 RUN git clone https://github.com/celuk/tpcds-postgres
 
