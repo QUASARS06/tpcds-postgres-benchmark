@@ -6,7 +6,7 @@ Most of the bash and python scripts mentioned above are copied over from - https
 
 # How to run
 
-0. Update the PGHOST and PGUSER in Dockerfile and pgtpcds_defaults file as per your settings.
+0. Update the PGHOST and PGUSER in Dockerfile and pgtpcds_defaults file as per your settings. Optionally update SCALE to generate data appropriately (n = n GB of data, eg 1=1GB, 100=100GB, should be integer)
 1. Make sure to create a database on postgres - CREATE DATABASE tpcds;
 2. docker compose up
 3. Exec into docker:- docker exec -it bigdata bash

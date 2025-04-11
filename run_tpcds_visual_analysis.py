@@ -48,12 +48,12 @@ for qid in range(1, 100):
     out_file = os.path.join(PLAN_TABLE_PATH, f"{PLAN_PFX}{qid}{PLAN_SFX}")
 
     if not os.path.exists(txt_file):
-        print(f"❌ Missing: {txt_file}")
+        print(f"Missing: {txt_file}")
         maxylist.append(0)
         maxnamelist.append("empty")
         continue
 
-    print(f"📤 Processing query {qid}...")
+    print(f"Processing query {qid}...")
 
     # Upload to depesz
     try:
@@ -61,7 +61,7 @@ for qid in range(1, 100):
         url_output = subprocess.check_output(upload_cmd, shell=True).decode()
         url = re.search(r'URL: (.*)', url_output).group(1) + "#stats"
     except Exception as e:
-        print(f"⚠️  Upload failed for Q{qid}: {e}")
+        print(f"Upload failed for Q{qid}: {e}")
         maxylist.append(0)
         maxnamelist.append("upload_failed")
         continue
@@ -85,7 +85,7 @@ for qid in range(1, 100):
                 f.write(line + '\n')
 
     except Exception as e:
-        print(f"⚠️  Parsing failed for Q{qid}: {e}")
+        print(f"Parsing failed for Q{qid}: {e}")
         maxylist.append(0)
         maxnamelist.append("parse_failed")
         continue
@@ -114,7 +114,7 @@ for qid in range(1, 100):
             maxylist.append(max_pct)
 
     except Exception as e:
-        print(f"⚠️  Error reading plan table for Q{qid}: {e}")
+        print(f"Error reading plan table for Q{qid}: {e}")
         maxnamelist.append("read_error")
         maxylist.append(0)
 
@@ -152,4 +152,4 @@ plt.legend(handles=patches, loc="upper left", bbox_to_anchor=(1, 1), fontsize=18
 plt.tight_layout()
 plt.savefig(f"/proj/{CHART_BASE_NAME}.pdf")
 plt.savefig(f"/proj/{CHART_BASE_NAME}.png")
-print("✅ Chart saved as PDF/PNG in /proj/")
+print("Chart saved as PDF/PNG in /proj/")

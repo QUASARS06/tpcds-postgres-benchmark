@@ -36,7 +36,7 @@ for qid in range(1, 100):
     t_start = time.time()
     file_path = os.path.join(TXT_DIR, f"q{qid}a.txt")
     if not os.path.isfile(file_path):
-        print(f"❌ Missing {file_path}")
+        print(f"Missing {file_path}")
         maxylist.append(0)
         maxnamelist.append("missing")
         continue
@@ -71,11 +71,11 @@ for qid in range(1, 100):
                 op_key = op if op in functions else "Other"
                 operator_times[op_key] = operator_times.get(op_key, 0) + duration
         except Exception as e:
-            print(f"⚠️  Error parsing line in Q{qid}: {e}")
+            print(f"Error parsing line in Q{qid}: {e}")
             continue
 
     if exec_time == 0:
-        print(f"⚠️  No execution time for Q{qid}")
+        print(f"No execution time for Q{qid}")
         maxylist.append(0)
         maxnamelist.append("invalid")
         continue
@@ -96,7 +96,7 @@ for qid in range(1, 100):
     maxylist.append(max_pct)
     maxnamelist.append(max_func)
 
-    print(f"✅ Processed query {qid} in {time.time() - t_start:.2f}s")
+    print(f"Processed query {qid} in {time.time() - t_start:.2f}s")
 
 # === Normalize to 100% if needed
 for i in range(99):
@@ -132,6 +132,6 @@ plt.tight_layout()
 plt.savefig(OUTPUT_PDF)
 plt.savefig(OUTPUT_IMG)
 
-print("✅ Offline chart generated:")
-print(f"📄 PDF: {OUTPUT_PDF}")
-print(f"🖼️  PNG: {OUTPUT_IMG}")
+print("Offline chart generated:")
+print(f"PDF: {OUTPUT_PDF}")
+print(f"PNG: {OUTPUT_IMG}")

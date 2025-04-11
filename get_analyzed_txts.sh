@@ -1,14 +1,12 @@
 #!/bin/bash
 
-# Author: Adapted for Docker-based setup
-
 # === CONFIGURATION ===
 HOSTNAME=host.docker.internal
 PORT=5432
 USERNAME=chiragjain
 DBNAME=tpcds
 
-QLOC=/proj/tpcds_queries/acqueries   # <-- FIXED: now points to actual location
+QLOC=/proj/tpcds_queries/acqueries
 TXTLOC=/proj/tpcds_txts              # Output location for results
 
 mkdir -p "$TXTLOC"
@@ -22,8 +20,8 @@ for i in {1..99}; do
   if [ -f "$QUERY_FILE" ]; then
     psql -h "$HOSTNAME" -p "$PORT" -U "$USERNAME" -d "$DBNAME" -f "$QUERY_FILE" > "$OUT_FILE"
   else
-    echo "⚠️  Missing file: $QUERY_FILE"
+    echo "Missing file: $QUERY_FILE"
   fi
 done
 
-echo "✅ All queries executed. Results saved to: $TXTLOC"
+echo "All queries executed. Results saved to: $TXTLOC"
