@@ -1,0 +1,12 @@
+SCALE=1
+USERNAME=paradedb_user
+PASSWORD=paradedb_ps
+DATABASE=tpcds-paradedb
+PORT=5432
+HOSTNAME=paradedb
+
+TPCDSTMP=/proj/tpcds_tmp
+PGDATADIR=/tmp/pgdata
+PGBINDIR=/usr/bin
+TPCDSDIR=/proj/tpcds-postgres/DSGen-software-code-3.2.0rc1
+Q0DIR=/proj/tpcds_queries

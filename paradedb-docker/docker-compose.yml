@@ -1,0 +1,33 @@
+services:
+  paradedb:
+    image: paradedb/paradedb:latest
+    container_name: paradedb
+    environment:
+      POSTGRES_USER: paradedb_user
+      POSTGRES_PASSWORD: paradedb_ps
+      POSTGRES_DB: tpcds-paradedb
+    volumes:
+      - paradedb_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    networks:
+      - tpcds_net
+
+  tpcds:
+    build: .
+    container_name: tpcds
+    environment:
+      PGHOST: paradedb
+      PGUSER: paradedb_user
+      PGPASSWORD: paradedb_ps
+      PGDATABASE: tpcds-paradedb
+    depends_on:
+      - paradedb
+    networks:
+      - tpcds_net
+
+volumes:
+  paradedb_data:
+
+networks:
+  tpcds_net:
