@@ -1,0 +1,59 @@
+services:
+  coordinator:
+    image: citusdata/citus:12.1
+    container_name: citus-coordinator
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER={{ postgres_user }}
+      - POSTGRES_PASSWORD={{ postgres_password }}
+      - POSTGRES_DB={{ postgres_db }}
+    command: ["postgres", "-c", "shared_preload_libraries=citus"]
+    volumes:
+      - {{ init_path }}:/docker-entrypoint-initdb.d/init.sql
+    depends_on:
+      {% for i in range(1, num_workers + 1) %}
+      worker{{ i }}:
+        condition: service_healthy
+      {% endfor %}
+    networks:
+      - citus_net
+
+  {% for i in range(1, num_workers + 1) %}
+  worker{{ i }}:
+    image: citusdata/citus:12.1
+    container_name: citus-worker{{ i }}
+    environment:
+      - POSTGRES_USER={{ postgres_user }}
+      - POSTGRES_PASSWORD={{ postgres_password }}
+      - POSTGRES_DB={{ postgres_db }}
+    command: ["postgres", "-c", "shared_preload_libraries=citus"]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+    networks:
+      - citus_net
+  {% endfor %}
+
+  tpcds:
+    build: ../
+    container_name: tpcds
+    environment:
+      PGHOST: citus-coordinator
+      PGUSER: postgres
+      POSTGRES_PASSWORD: citus_pass
+      PGDATABASE: citus_db
+    depends_on:
+      - coordinator    
+    networks:
+      - citus_net
+
+volumes:
+  citus_data:
+
+networks:
+  citus_net:
+    driver: bridge

@@ -1,0 +1,19 @@
+CREATE EXTENSION IF NOT EXISTS citus;
+
+{% for w in range(1, num_workers + 1) %}
+{%   if w == 1 %}
+-- worker1 becomes the primary of group 1
+SELECT * FROM citus_add_node(
+  'citus-worker1', 5432,
+  1,             -- groupid = 1
+  'primary'      -- noderole = primary
+);
+{%   else %}
+-- subsequent workers join group 1 as replicas
+SELECT * FROM citus_add_node(
+  'citus-worker{{ w }}', 5432,
+  1,             -- same groupid = 1
+  'secondary'    -- noderole = secondary
+);
+{%   endif %}
+{% endfor %}
